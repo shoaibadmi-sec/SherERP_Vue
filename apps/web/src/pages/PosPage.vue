@@ -887,7 +887,24 @@ async function onSearchEnter(): Promise<void> {
   if (chosen === undefined) return;
   addToCart(chosen);
   clearSearch();
-  await focusSearch();
+  await focusCartQuantity(chosen.id);
+}
+
+/** Search → quantity → search, without posting or modifying the sale. */
+async function focusCartQuantity(productId: string): Promise<void> {
+  await nextTick();
+  const index = lines.value.findIndex((line) => line.productId === productId);
+  if (index < 0) return;
+  const input = document.querySelectorAll<HTMLInputElement>('.cart__line .cart__qty input').item(index);
+  input?.focus();
+  input?.select();
+}
+
+function onCartQuantityEnter(event: KeyboardEvent): void {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.closest('.cart__qty') === null) return;
+  event.preventDefault();
+  void focusSearch();
 }
 
 function clearSearch(): void {
@@ -1106,13 +1123,14 @@ onBeforeUnmount(() => {
 
 <template>
   <AppShell title="POS — New Sale" help-bn="নতুন বিক্রি">
-    <div class="pos">
+    <div class="pos" data-ui="hisabiq-pos-v2">
       <!-- One bar, always ready: type a name, or let the scanner type for you. -->
       <div class="scanbar">
         <i class="pi pi-search scanbar__icon" aria-hidden="true" />
         <input
           id="pos-search"
           v-model="search"
+          aria-label="Scan barcode or search products"
           class="scanbar__input"
           type="search"
           inputmode="search"
@@ -1131,6 +1149,7 @@ onBeforeUnmount(() => {
           v-if="search !== ''"
           type="button"
           class="scanbar__clear"
+          aria-label="Clear product search"
           title="Clear (Esc)"
           @click="clearSearch(); void focusSearch()"
         >
@@ -1148,6 +1167,7 @@ onBeforeUnmount(() => {
           v-if="session.can('catalog.product.create')"
           type="button"
           class="scanbar__add"
+          aria-label="Add product"
           title="Add a product"
           @click="openAddProduct"
         >
@@ -1185,7 +1205,7 @@ onBeforeUnmount(() => {
 
       <div class="pos__body">
         <!-- ------------------------------------------------ the catalogue -->
-        <section class="panel catalogue">
+        <section class="panel catalogue" :class="{ 'catalogue--compact': lines.length > 0 }" aria-label="Find products">
           <div class="catalogue__filters">
             <div class="chips">
               <button
@@ -1194,6 +1214,7 @@ onBeforeUnmount(() => {
                 type="button"
                 class="chip"
                 :class="{ 'chip--on': categoryId === chip.id }"
+                :aria-pressed="categoryId === chip.id"
                 @click="categoryId = chip.id"
               >
                 {{ chip.name }}
@@ -1225,6 +1246,7 @@ onBeforeUnmount(() => {
               type="button"
               class="chip chip--sm"
               :class="{ 'chip--on': brandId === chip.id }"
+              :aria-pressed="brandId === chip.id"
               @click="brandId = chip.id"
             >
               {{ chip.name }}
@@ -1299,65 +1321,12 @@ onBeforeUnmount(() => {
         </section>
 
         <!-- ------------------------------------------------------ the cart -->
-        <aside class="panel cart">
-          <div class="cart__customer">
-            <div class="grid-2">
-              <label class="field">
-                <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
-                <InputText v-model="customerName" placeholder="Walk-in customer" />
-              </label>
-              <label class="field">
-                <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
-                <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
-              </label>
+        <aside class="panel cart" aria-label="Sale cart">
+          <div class="cart__editing">
+            <div class="cart__heading">
+              <strong>Sale items <span class="label-bn">বিক্রির পণ্য</span></strong>
+              <span>{{ lines.length }} {{ lines.length === 1 ? 'item' : 'items' }}</span>
             </div>
-
-            <Select
-              v-model="customerId"
-              :options="customerOptions"
-              option-label="label"
-              option-value="value"
-              filter
-              show-clear
-              placeholder="Or pick a saved customer"
-              class="cart__pick"
-            />
-
-            <p v-if="standing && standing.dueMinor > 0" class="standing standing--due">
-              <span>Outstanding Due <span class="label-bn">আগের বাকি</span></span>
-              <strong>{{ taka(standing.dueMinor) }}</strong>
-            </p>
-            <p v-else-if="standing && standing.advanceMinor > 0" class="standing standing--advance">
-              <span>Advance held <span class="label-bn">জমা আছে</span></span>
-              <strong>{{ taka(standing.advanceMinor) }}</strong>
-            </p>
-
-            <div class="cart__customer-links">
-              <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
-                {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
-              </button>
-              <button
-                type="button"
-                class="linkish"
-                :disabled="customerPhone.trim() === ''"
-                @click="router.push({ name: 'sales', query: { search: customerPhone } })"
-              >
-                Sales history for this phone
-              </button>
-            </div>
-
-            <div v-if="showMoreCustomer" class="grid-2">
-              <label class="field">
-                <span>Father Name <span class="label-bn">বাবার নাম</span></span>
-                <InputText v-model="guardianName" placeholder="Optional" />
-              </label>
-              <label class="field">
-                <span>Address <span class="label-bn">ঠিকানা</span></span>
-                <InputText v-model="address" placeholder="Optional" />
-              </label>
-            </div>
-          </div>
-
           <div class="cart__lines">
             <div v-if="lines.length === 0" class="cart__empty">
               <i class="pi pi-shopping-cart" />
@@ -1374,7 +1343,7 @@ onBeforeUnmount(() => {
               </div>
 
               <div v-for="(line, index) in lines" :key="line.productId" class="cart__line">
-                <div class="cart__line-main">
+                <div class="cart__line-main" @keydown.enter="onCartQuantityEnter">
                   <div class="cart__line-name">
                     <span class="cart__line-title" :title="line.productName">
                       {{ line.productName }}
@@ -1587,6 +1556,66 @@ onBeforeUnmount(() => {
             </template>
           </div>
 
+          </div>
+          <div class="cart__checkout">
+          <div class="cart__customer">
+            <div class="grid-2">
+              <label class="field">
+                <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
+                <InputText v-model="customerName" placeholder="Walk-in customer" />
+              </label>
+              <label class="field">
+                <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
+                <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
+              </label>
+            </div>
+
+            <Select
+              v-model="customerId"
+              :options="customerOptions"
+              option-label="label"
+              option-value="value"
+              filter
+              show-clear
+              placeholder="Or pick a saved customer"
+              class="cart__pick"
+            />
+
+            <p v-if="standing && standing.dueMinor > 0" class="standing standing--due">
+              <span>Outstanding Due <span class="label-bn">আগের বাকি</span></span>
+              <strong>{{ taka(standing.dueMinor) }}</strong>
+            </p>
+            <p v-else-if="standing && standing.advanceMinor > 0" class="standing standing--advance">
+              <span>Advance held <span class="label-bn">জমা আছে</span></span>
+              <strong>{{ taka(standing.advanceMinor) }}</strong>
+            </p>
+
+            <div class="cart__customer-links">
+              <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
+                {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
+              </button>
+              <button
+                type="button"
+                class="linkish"
+                :disabled="customerPhone.trim() === ''"
+                @click="router.push({ name: 'sales', query: { search: customerPhone } })"
+              >
+                Sales history for this phone
+              </button>
+            </div>
+
+            <div v-if="showMoreCustomer" class="grid-2">
+              <label class="field">
+                <span>Father Name <span class="label-bn">বাবার নাম</span></span>
+                <InputText v-model="guardianName" placeholder="Optional" />
+              </label>
+              <label class="field">
+                <span>Address <span class="label-bn">ঠিকানা</span></span>
+                <InputText v-model="address" placeholder="Optional" />
+              </label>
+            </div>
+          </div>
+
           <!-- Totals. Every one of these moves on every keystroke above. -->
           <div class="totals">
             <div class="totals__row">
@@ -1686,6 +1715,7 @@ onBeforeUnmount(() => {
             </span>
             <span class="complete__bn">সেল সম্পন্ন করুন</span>
           </button>
+          </div>
         </aside>
       </div>
     </div>
