@@ -1,0 +1,85 @@
+<script setup lang="ts">
+import Message from 'primevue/message';
+import { computed } from 'vue';
+
+import { useSession } from '../auth/session';
+/**
+ * A failure, said in a way the person reading it can act on.
+ *
+ * UI-28 requires the server's error **code** to stay visible — when a shopkeeper
+ * rings for help, "it says PERMISSION_DENIED" is how the problem gets found in
+ * seconds. But the code is for that phone call, not for the person's decision,
+ * so the sentence comes first and the code sits after it, small and grey.
+ *
+ * What UI-28 forbids is the opposite of a code: "Something went wrong" and a
+ * silent catch. This shows both, in the order that matches who needs which.
+ */
+defineProps<{ code: string; message: string; tone?: 'error' | 'warning' }>();
+
+const session = useSession();
+const canSeeTechnicalDetails = computed(
+  () => session.can('audit.event.view') || session.can('user.role.view'),
+);
+</script>
+
+<template>
+  <Message
+    class="error-notice"
+    :severity="tone === 'warning' ? 'warn' : 'error'"
+    :closable="false"
+  >
+    <span class="notice-copy">
+      <span class="message">{{ message }}</span>
+      <details v-if="canSeeTechnicalDetails" class="technical-details">
+        <summary>Technical details</summary>
+        <span class="reference">Reference: <code>{{ code }}</code></span>
+      </details>
+      <slot />
+    </span>
+  </Message>
+</template>
+
+<style scoped>
+.error-notice {
+  margin: 0;
+}
+
+.notice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* The sentence is the message. It reads at normal size, in normal text colour. */
+.message {
+  font-size: var(--sher-text-base);
+  color: var(--sher-text);
+}
+
+/* The code is a support reference, not the explanation. */
+.reference {
+  font-size: var(--sher-text-2xs);
+  color: var(--sher-text-muted);
+}
+
+.technical-details {
+  color: var(--sher-text-muted);
+  font-size: var(--sher-text-xs);
+}
+
+.technical-details summary {
+  width: max-content;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.technical-details .reference {
+  display: block;
+  margin-top: var(--sher-space-1);
+}
+
+code {
+  font-family: var(--sher-font-mono);
+  letter-spacing: 0.03em;
+}
+</style>

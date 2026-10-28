@@ -1,0 +1,26 @@
+{
+  "name": "@sher/adapter-postgres",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@sher/core-application": "workspace:*",
+    "@sher/core-contracts": "workspace:*",
+    "@sher/core-domain": "workspace:*",
+    "@sher/shared-utils": "workspace:*",
+    "drizzle-orm": "0.38.3",
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "@types/pg": "8.11.10",
+    "typescript": "5.7.3",
+    "vitest": "2.1.8"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "shererp",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test:boundaries": "pnpm --filter @sher/boundaries run check",
+    "test:inventory": "pnpm --filter @sher/test-inventory run scan",
+    "test:unit": "pnpm --filter @sher/core-domain --filter @sher/shared-utils run test",
+    "test:integration": "pnpm --filter @sher/api run test",
+    "test:component": "pnpm --filter @sher/web run test",
+    "test": "pnpm -r test",
+    "e2e": "pnpm --filter @sher/web exec playwright test --project=desktop",
+    "e2e:mobile": "pnpm --filter @sher/web exec playwright test --project=mobile",
+    "test:e2e": "pnpm --filter @sher/web run test:e2e",
+    "test:all": "pnpm typecheck && pnpm lint && pnpm test:boundaries && pnpm test:inventory -- --check && pnpm test:unit && pnpm test:integration && pnpm test:component && pnpm build && pnpm test:e2e",
+    "dev": "pnpm --filter @sher/api run dev",
+    "licence:keygen": "pnpm --filter @sher/licence-tools run keygen --",
+    "licence:issue": "pnpm --filter @sher/licence-tools run issue --",
+    "signer:keygen": "pnpm --filter @sher/signer run keygen",
+    "signer": "pnpm --filter @sher/signer run start",
+    "control:migrate": "pnpm --filter @sher/control-plane run db:migrate",
+    "control:operator": "pnpm --filter @sher/control-plane run operator:create --",
+    "control:operator:recover": "pnpm --filter @sher/control-plane run operator:recover --",
+    "control:dev": "pnpm --filter @sher/admin run dev",
+    "agent:enrol": "pnpm --filter @sher/agent run enrol --",
+    "agent": "pnpm --filter @sher/agent run start",
+    "e2e:visual": "pnpm --filter @sher/web exec playwright test --project=desktop visual",
+    "test:a11y": "pnpm --filter @sher/web exec playwright test --project=desktop accessibility"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "eslint": "9.18.0",
+    "typescript": "5.7.3",
+    "typescript-eslint": "8.20.0",
+    "vitest": "2.1.8"
+  },
+  "pnpm": {
+    "overrides": {
+      "@primeuix/styles": "1.0.3"
+    }
+  }
+}

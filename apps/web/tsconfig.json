@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "types": ["vite/client", "vitest/globals"],
+    /*
+     * The shared contracts are read from source, like every other package in the
+     * workspace reads its workspace dependencies.
+     *
+     * Without this, `vue-tsc` resolves `@sher/core-contracts` through
+     * `node_modules` to `dist/`, so the web app typechecks against a build
+     * artefact — stale after any contract change, and absent entirely on a clean
+     * checkout, where CI runs `typecheck` with no build step before it.
+     * `vite.config.ts` carries the matching alias so dev, build and typecheck all
+     * read the same files.
+     */
+    "paths": {
+      "@sher/core-contracts": ["../../packages/core-contracts/src/index.ts"],
+      "@sher/core-domain": ["../../packages/core-domain/src/index.ts"],
+      "@sher/shared-utils": ["../../packages/shared-utils/src/index.ts"],
+      "@sher/adapter-sqlite-wasm": ["../../packages/adapter-sqlite-wasm/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "test/**/*.ts",
+    "e2e/**/*.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
+}

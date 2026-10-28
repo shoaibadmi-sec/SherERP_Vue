@@ -1,0 +1,173 @@
+/*
+ * The centred card shared by sign-in, sign-up, password recovery and the
+ * Google callback.
+ *
+ * Extracted so the four cannot drift apart: they are the same object showing
+ * different fields, and a user moving between them should not see the geometry
+ * change. Imported into each page's scoped block, so the selectors stay local.
+ *
+ * Buttons, fields, help text and notices are **not** redefined here — they come
+ * from `design/components.css` like everywhere else. What is left below is only
+ * what a signed-out, single-column card needs: the page it sits on, the card
+ * itself, the brand lockup, and the full-width button shape that a 400px form
+ * uses instead of the shell's inline one.
+ */
+
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 40px 16px;
+  background: var(--sher-surface);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--sher-raised);
+  border: 1px solid var(--sher-line);
+  border-radius: var(--sher-radius-xl);
+  box-shadow: none;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--sher-radius);
+  background: var(--sher-primary);
+  color: var(--sher-on-primary);
+  font-weight: 700;
+  font-size: var(--sher-text-lg);
+}
+
+.brand-text {
+  font-size: var(--sher-text-lg);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--sher-font-heading);
+  font-size: var(--sher-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lede,
+.sent-to {
+  margin: -8px 0 0;
+  font-size: var(--sher-text-sm);
+  color: var(--sher-text-muted);
+}
+
+.sent-to strong {
+  color: var(--sher-text);
+  font-variant-numeric: tabular-nums;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row .field {
+  flex: 1;
+}
+
+.field-pin {
+  max-width: 120px;
+}
+
+/* One decision per screen, so the action fills the column. */
+.card .btn {
+  width: 100%;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sher-text-faint);
+  font-size: var(--sher-text-xs);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--sher-line);
+}
+
+/*
+ * UI-28: the server's message first, its code beside it. `ErrorNotice.vue` is
+ * the same idea for screens inside the shell; a signed-out page cannot import
+ * the shell, so the shape is repeated here and nowhere else.
+ */
+.error {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--sher-bad-line);
+  border-radius: var(--sher-radius);
+  background: var(--sher-bad-bg);
+  color: var(--sher-text);
+  font-size: var(--sher-text-sm);
+}
+
+.error-code { display: none; }
+
+/* Development only: the OTP the server would have texted. */
+.dev-code {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px dashed var(--sher-warn-line);
+  border-radius: var(--sher-radius);
+  background: var(--sher-warn-bg);
+  color: var(--sher-warn);
+  font-size: var(--sher-text-sm);
+}
+
+.dev-code strong {
+  font-family: var(--sher-font-mono);
+  font-size: var(--sher-text-lg);
+  letter-spacing: 0.08em;
+}
+
+.fine {
+  margin: 6px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--sher-line);
+  font-size: var(--sher-text-xs);
+  line-height: 1.6;
+  color: var(--sher-text-muted);
+}
+
+.fine a,
+.fine .linkish {
+  color: var(--sher-primary-text);
+  font-size: inherit;
+}
