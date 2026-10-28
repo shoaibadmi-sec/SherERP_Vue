@@ -2868,6 +2868,10 @@
           "role": "SECONDARY"
         },
         {
+          "label": "·",
+          "role": "SECONDARY"
+        },
+        {
           "label": "Show purchase price",
           "role": "SECONDARY"
         },
@@ -2898,10 +2902,6 @@
         {
           "label": "Confirm Allocation",
           "role": "PRIMARY"
-        },
-        {
-          "label": "·",
-          "role": "SECONDARY"
         },
         {
           "label": "+ Father name / address",
