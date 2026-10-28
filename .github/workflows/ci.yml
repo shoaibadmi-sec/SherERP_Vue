@@ -53,6 +53,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Workspace packages expose their TypeScript types through dist/index.d.ts.
+      # A fresh CI checkout has no dist directories; emitting dependency types
+      # first prevents false TS2307 failures before any UI or API code is checked.
+      - name: build shared workspace packages before typechecking
+        run: pnpm --filter "./packages/**" build
+
       # Order is binding: lint, typecheck, boundaries, test. All must pass.
       - run: pnpm lint
       - run: pnpm typecheck
