@@ -213,3 +213,61 @@ pnpm licence:issue --kind dev --business '*' --days 365      # এই ডেভ 
 
 শপ-এর দিক থেকে রিনিউ করতে টার্মিনাল লাগে না: **Settings → Licence** পেজে কী পেস্ট করলেই সঙ্গে
 সঙ্গে চালু হয়, সার্ভার রিস্টার্ট ছাড়াই।
+
+
+---
+
+## ৮. GitHub → AWS development CI/CD (EC2; opt-in)
+
+এই অংশটি AWS EC2 ব্যবহার করলে প্রযোজ্য। কোনো AWS instance স্বয়ংক্রিয়ভাবে চালু হয় না,
+প্রোডাকশনে deploy হয় না, এবং এই repository-র workflow একা কোনো server provision করে না।
+
+- Existing `.github/workflows/ci.yml`: push/PR-এ lint, workspace build, typecheck,
+  boundary checks, test inventory, unit/integration/component tests, web build,
+  এবং Playwright acceptance চালায়। Manual deploy-ও একই CI gates পুনরায় চালায়।
+- New `.github/workflows/deploy-aws-development.yml`: **Actions → Deploy AWS
+  development → Run workflow** কেবল `main` branch থেকে চালাতে হবে।
+  Confirmation input: `DEPLOY-DEV`।
+- Workflow একটি GitHub Environment `aws-development` ব্যবহার করে। Environment-এ
+  **deployment branches = main** এবং **required reviewers** set করা উচিত।
+- Environment variables: `AWS_REGION` (যেমন `ap-south-1`; আপনার actual region),
+  `AWS_DEV_INSTANCE_ID` (actual `i-...`)।
+  Environment secret: `AWS_ROLE_TO_ASSUME` (IAM role ARN)।
+- AWS IAM: GitHub Actions OIDC provider
+  `https://token.actions.githubusercontent.com` এবং audience `sts.amazonaws.com`
+  configure করুন। Trust policy-তে `sub` exact
+  `repo:shoaibadmi-sec/SherERP_Vue:environment:aws-development`
+  এবং `aud=sts.amazonaws.com` restrict করুন।
+  IAM role-কে শুধুমাত্র selected instance-এ `AWS-RunShellScript` document
+  দিয়ে `ssm:SendCommand` এবং status পড়ার জন্য `ssm:GetCommandInvocation`
+  permission দিন। Long-lived AWS access keys GitHub-এ দেবেন না।
+- AWS instance-এ **SSM Agent online**, instance profile-এ
+  `AmazonSSMManagedInstanceCore`, এবং SSM endpoints-এ HTTPS connectivity লাগবে।
+  Workflow server-এ SSH অথবা inbound port 22 ব্যবহার করে না।
+- Server-এ root-owned executable
+  `/usr/local/sbin/shererp-deploy-dev` implement/install করতে হবে। এটির
+  interface: একটিমাত্র exact 40-character Git commit SHA argument; exit 0 only
+  after successful deploy + health checks. Hook না থাকলে deploy **fail-closed**
+  হবে; workflow নিজে `git pull`, migration, বা restart অনুমান করে না।
+- Hook-এর দায়িত্ব: given SHA verify করা, আলাদা release directory-তে build/release
+  প্রস্তুত করা, `.env`/license/private keys code-এর বাইরে রাখা, database
+  migration-এর আগে backup/approval নিশ্চিত করা, existing deployment-এর স্বাস্থ্য
+  পরীক্ষা, এবং failure হলে আগের release-এ rollback। Repo-তে কোনো credentials
+  বা production keys commit করা যাবে না।
+- Stopped EC2-তে deploy চেষ্টা করলে fail করবে; **GitHub Actions EC2 start করবে
+  না**। ব্যবহার শেষে AWS EC2 Console থেকে stop করুন। Stopped অবস্থায় EBS
+  storage (এবং applicable public IPv4/EIP) charges চলতে পারে।
+- **বর্তমান অবস্থা:** workflow is a deployment integration point, NOT a
+  configured AWS server. GitHub Environment/IAM/EC2/server hook তৈরি ও
+  যাচাই না করা পর্যন্ত কোনো AWS deployment সম্পন্ন হয়নি।
+
+### Deployment runbook
+
+1. আগে GitHub PR-এর green CI নিশ্চিত করুন। CI না পাস করলে manual deploy হবে না।
+2. AWS-এ running development EC2, SSM Agent এবং IAM role প্রস্তুত করুন।
+3. Server-এর actual directory/service topology বুঝে root-owned deploy hook তৈরি
+   করুন; instance-এ সরাসরি একটি known commit দিয়ে test করুন।
+4. GitHub-এ `aws-development` Environment + variables/secret configure করুন।
+5. GitHub Actions থেকে manual workflow চালান; SSM invocation status দেখুন।
+6. API `/health`, ERP login, admin login ও database integrity manually verify
+   করুন। Production credentials এবং database deployment-এ reuse করবেন না।
