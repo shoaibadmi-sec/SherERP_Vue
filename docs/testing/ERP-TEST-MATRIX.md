@@ -875,12 +875,12 @@
 | **Kind** | PAGE |
 | **Route** | `/pos` |
 | **Roles** | sale.invoice.create |
-| **Fields** | pos-search (TEXT) ⚠ no accessible name, customerName (TEXT), customerPhone (TEXT), customerId (SEARCHABLE_SELECT) ⚠ no accessible name, guardianName (TEXT), address (TEXT), line.qty (MONEY) ⚠ no accessible name, line.price (MONEY) ⚠ no accessible name, line.lineDiscount (MONEY) ⚠ no accessible name, line.selectedOwnedSerialIds (CHECKBOX) ⚠ no accessible name, line.vendorPartyId (SEARCHABLE_SELECT) ⚠ no accessible name, line.vendorAllocation (MONEY) ⚠ no accessible name, line.selectedVendorSerialIds (CHECKBOX) ⚠ no accessible name, line.negativeAllocation (MONEY) ⚠ no accessible name, discount (MONEY) ⚠ no accessible name, payment.accountId (SELECT) ⚠ no accessible name, payment.amount (MONEY) ⚠ no accessible name |
+| **Fields** | pos-search (TEXT), line.qty (MONEY) ⚠ no accessible name, line.price (MONEY) ⚠ no accessible name, line.lineDiscount (MONEY) ⚠ no accessible name, line.selectedOwnedSerialIds (CHECKBOX) ⚠ no accessible name, line.vendorPartyId (SEARCHABLE_SELECT) ⚠ no accessible name, line.vendorAllocation (MONEY) ⚠ no accessible name, line.selectedVendorSerialIds (CHECKBOX) ⚠ no accessible name, line.negativeAllocation (MONEY) ⚠ no accessible name, customerName (TEXT), customerPhone (TEXT), customerId (SEARCHABLE_SELECT) ⚠ no accessible name, guardianName (TEXT), address (TEXT), discount (MONEY) ⚠ no accessible name, payment.accountId (SELECT) ⚠ no accessible name, payment.amount (MONEY) ⚠ no accessible name |
 | **Required fields** | — |
-| **Optional fields** | pos-search, customerName, customerPhone, customerId, guardianName, address, line.qty, line.price, line.lineDiscount, line.selectedOwnedSerialIds, line.vendorPartyId, line.vendorAllocation, line.selectedVendorSerialIds, line.negativeAllocation, discount, payment.accountId, payment.amount |
+| **Optional fields** | pos-search, line.qty, line.price, line.lineDiscount, line.selectedOwnedSerialIds, line.vendorPartyId, line.vendorAllocation, line.selectedVendorSerialIds, line.negativeAllocation, customerName, customerPhone, customerId, guardianName, address, discount, payment.accountId, payment.amount |
 | **Dropdowns** | customerId (searchable), line.vendorPartyId (searchable), payment.accountId |
 | **Primary action** | Sell anyway, Confirm Allocation |
-| **Secondary actions** | Clear (Esc), Drafts ( ), Add a product, Leave it alone, Grid, List, Add the first product, Show everything … (+15) |
+| **Secondary actions** | Clear product search, Drafts ( ), Add product, Leave it alone, Grid, List, Add the first product, Show everything … (+15) |
 | **Row actions** | — |
 | **Destructive actions** | Remove …, Remove this payment, Delete this draft |
 | **Opens** | ConfirmDialog, InvoicePreviewDialog, StartDayDialog, VendorStockReceiveDialog |
