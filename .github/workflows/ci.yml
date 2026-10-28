@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_call:
 
 jobs:
   # ---------------------------------------------------------------- the gates
@@ -55,6 +56,10 @@ jobs:
 
       # Order is binding: lint, typecheck, boundaries, test. All must pass.
       - run: pnpm lint
+      # Internal workspace packages declare types at dist/*.d.ts. A fresh
+      # checkout must build them before tsc can resolve imports such as
+      # @sher/shared-utils (CI run 40688851818 failed without this).
+      - run: pnpm --filter "./packages/**" build
       - run: pnpm typecheck
       - run: pnpm test:boundaries
 
