@@ -27,7 +27,7 @@ test.describe('HisabIQ cart-first POS', () => {
     await expect(page.locator('.cart__qty input').first()).toBeFocused();
     await page.locator('.cart__qty input').first().press('Enter');
     await expect(search).toBeFocused();
-    await page.locator('.cart__line-total').first().focus();
+    await page.locator('.cart__qty input').first().focus();
     await page.keyboard.press('F2');
     await expect(search).toBeFocused();
 
