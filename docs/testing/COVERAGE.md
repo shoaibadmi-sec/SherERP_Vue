@@ -10,20 +10,20 @@
 | | Total | Covered | |
 | --- | ---: | ---: | ---: |
 | Routes | 54 | 19 | 35% |
-| Forms, dialogs and drawers | 57 | 0 | 0% |
-| Fields | 392 | 175 | — |
+| Forms, dialogs and drawers | 57 | 1 | 2% |
+| Fields | 392 | 195 | — |
 | Dropdowns | 94 | 0 | — |
 | Business actions | 106 | — | — |
-| Endpoints | 229 | 102 | 45% |
+| Endpoints | 229 | 111 | 48% |
 | Permission codes | 119 | 119 | 100% |
-| Critical workflows | 17 | 11 | 65% |
+| Critical workflows | 17 | 13 | 76% |
 | Mobile-relevant screens | 14 | 14 | 100% |
 
 ## Screens by status
 
-- ✅ TESTED — 19
-- 🟡 PARTIALLY TESTED — 38
-- ❌ NOT TESTED — 52
+- ✅ TESTED — 20
+- 🟡 PARTIALLY TESTED — 43
+- ❌ NOT TESTED — 46
 - ⬜ NOT APPLICABLE — 3
 
 ## Everything not fully covered
@@ -47,7 +47,7 @@
 | PartiesPage | 🟡 PARTIALLY TESTED | dropdown filter-group, dropdown filter-status, action Add, action Add the first, action Delete, action Reactivate, action Remove |
 | PartyFormPage | 🟡 PARTIALLY TESTED | required field party-name, required field party-phone, required field party-credit, required field party-opening, dropdown customerGroupId, dropdown openingDirection, dropdown party-opening-role, action Edit details, action Delete, action Save changes |
 | PartyLedgerPage | 🟡 PARTIALLY TESTED | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action New sale, action Pay supplier |
-| PosPage | 🟡 PARTIALLY TESTED | dropdown customerId, dropdown line.vendorPartyId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
+| PosPage | 🟡 PARTIALLY TESTED | dropdown line.vendorPartyId, dropdown customerId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
 | ProductsPage | 🟡 PARTIALLY TESTED | dropdown filter-brand, dropdown filter-category, dropdown filter-subcategory, dropdown filter-stock, dropdown filter-status, action Add the first product, action Reactivate, action Delete |
 | PurchaseDetailPage | 🟡 PARTIALLY TESTED | action New purchase, action Cancel bill |
 | PurchaseFormPage | 🟡 PARTIALLY TESTED | required field supplierId, required field paidAccountId, dropdown supplierId, dropdown productPick, dropdown categoryId, dropdown cost.category, dropdown cost.method, dropdown paidAccountId, action Remove …, action Remove landed cost … |
@@ -64,7 +64,6 @@
 | UsersPage | 🟡 PARTIALLY TESTED | required field display-name, required field username, required field identifier, required field confirm, required field confirm-toggle, dropdown role, action Add user, action Disable, action Save changes |
 | VendorWorkspacePage | 🟡 PARTIALLY TESTED | dropdown workspace-vendor |
 | WarrantyClaimsPage | 🟡 PARTIALLY TESTED | required field wc-complaint, action Take it in |
-| CancelDocumentDialog | ❌ NOT TESTED | the screen itself |
 | ConfirmDialog | ❌ NOT TESTED | the screen itself, action Confirm |
 | DateOnlyPicker | 🟡 PARTIALLY TESTED | required field inputId |
 | ManageListDialog | 🟡 PARTIALLY TESTED | required field newName, required field draft, action Remove |
@@ -72,13 +71,13 @@
 | ProductForm | 🟡 PARTIALLY TESTED | required field product-name, required field baseUnitId, required field purchase-price, required field selling-price, required field opening-stock, required field opening-expiry, required field discount-type, required field offerEnabled, required field tracks-expiry, dropdown brandId … (+8) |
 | QuickAddSelect | 🟡 PARTIALLY TESTED | dropdown fieldId |
 | SearchField | ❌ NOT TESTED | the screen itself |
-| StockAdjustDialog | ❌ NOT TESTED | the screen itself, required field stock-amount, required field stock-note, dropdown stock-reason, action Save adjustment |
+| StockAdjustDialog | 🟡 PARTIALLY TESTED | required field stock-amount, required field stock-note, dropdown stock-reason, action Save adjustment |
 | StockLotsDialog | ❌ NOT TESTED | the screen itself, dropdown lot-status |
 | ReplaceBackupSecretDialog | ❌ NOT TESTED | the screen itself, required field secret-new, required field secret-confirm, action Set password |
 | ResetBusinessDialog | ❌ NOT TESTED | the screen itself, required field reset-phrase, required field reset-password, action Close, action Delete all business data |
 | RestoreDialog | ❌ NOT TESTED | the screen itself, action Restore this backup |
 | QuickAddProductDialog | ❌ NOT TESTED | the screen itself, required field qp-name, required field qp-unit, required field qp-min, dropdown qp-unit, dropdown qp-supplier, action Add product |
-| ChangeTransactionDateDialog | ❌ NOT TESTED | the screen itself, required field redate-date, action Change date |
+| ChangeTransactionDateDialog | 🟡 PARTIALLY TESTED | required field redate-date, action Change date |
 | DaybookSheet | ❌ NOT TESTED | the screen itself |
 | AmountInput | ❌ NOT TESTED | the screen itself |
 | ComboField | ❌ NOT TESTED | the screen itself, dropdown fieldId |
@@ -93,7 +92,7 @@
 | ImportStatementDialog | ❌ NOT TESTED | the screen itself, action Remove |
 | ManageLoanAccountsDialog | ❌ NOT TESTED | the screen itself, action Add loan account |
 | MoneyAccountPicker | ❌ NOT TESTED | the screen itself |
-| RecordExpenseDialog | ❌ NOT TESTED | the screen itself, dropdown categoryId, dropdown accountId, dropdown payeeId, action Save |
+| RecordExpenseDialog | 🟡 PARTIALLY TESTED | dropdown categoryId, dropdown accountId, dropdown payeeId, action Save |
 | ReopenDayDialog | ❌ NOT TESTED | the screen itself, dropdown picked |
 | StartDayDialog | ❌ NOT TESTED | the screen itself, dropdown counterpart |
 | StartReconciliationDialog | ❌ NOT TESTED | the screen itself, action Start |
@@ -104,12 +103,12 @@
 | ReplaceWriterDialog | ❌ NOT TESTED | the screen itself, dropdown oldMachineWorks, action Move offline permission |
 | PartyOpeningDialog | ❌ NOT TESTED | the screen itself, required field opening-amount, dropdown opening-direction, action Post opening balance |
 | AddLandedCostDialog | ❌ NOT TESTED | the screen itself, required field cost-category, required field cost-description, required field cost-amount, required field cost-method, dropdown cost-category, dropdown cost-method, dropdown cost-account, action Add cost |
-| PaySupplierDialog | ❌ NOT TESTED | the screen itself, dropdown pay-account |
+| PaySupplierDialog | 🟡 PARTIALLY TESTED | dropdown pay-account |
 | PurchaseReturnDialog | ❌ NOT TESTED | the screen itself, dropdown reason, dropdown accountId, action Send Back |
 | ProfitTargetDialog | ❌ NOT TESTED | the screen itself, dropdown target-basis |
 | ReportScreen | ❌ NOT TESTED | the screen itself |
 | WhyDialog | ❌ NOT TESTED | the screen itself |
-| ReceivePaymentDialog | ❌ NOT TESTED | the screen itself, dropdown accountId |
+| ReceivePaymentDialog | 🟡 PARTIALLY TESTED | dropdown accountId |
 | SalesReturnDialog | ❌ NOT TESTED | the screen itself, dropdown reason, dropdown accountId, action Take Return, action Approve |
 | GlobalSearchDialog | ❌ NOT TESTED | the screen itself |
 | GiveProductsToVendorDialog | ❌ NOT TESTED | the screen itself, dropdown give-mode, dropdown give-product |
