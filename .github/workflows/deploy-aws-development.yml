@@ -1,0 +1,112 @@
+# Development deployment is intentionally manual. It never starts EC2 instances,
+# never deploys production, and does not run for pushes or pull requests.
+#
+# GitHub Environment: aws-development (restrict deployment branches to main;
+# enable required reviewer approval before first live deployment).
+# Environment vars: AWS_REGION, AWS_DEV_INSTANCE_ID
+# Environment secret: AWS_ROLE_TO_ASSUME (GitHub OIDC IAM role ARN)
+#
+# EC2 prerequisites: online SSM Agent + AmazonSSMManagedInstanceCore instance
+# profile; executable /usr/local/sbin/shererp-deploy-dev server-side hook.
+# That hook must independently verify the SHA, manage releases and perform
+# health checks/rollback; this workflow fails closed if the hook is absent.
+name: Deploy AWS development
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY-DEV to confirm a manual deployment from main'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shererp-aws-development
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Confirm main-branch development deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation and branch
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" || "$CONFIRMATION" != "DEPLOY-DEV" ]]; then
+            echo "::error::Only main can deploy, with confirmation DEPLOY-DEV."
+            exit 1
+          fi
+
+  ci:
+    name: Run existing verification and acceptance gates
+    needs: guard
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to EC2 via Systems Manager
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: aws-development
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      INSTANCE_ID: ${{ vars.AWS_DEV_INSTANCE_ID }}
+    steps:
+      - name: Validate AWS configuration
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        run: |
+          set -euo pipefail
+          [[ -n "$AWS_REGION" ]] || { echo "::error::Set aws-development variable AWS_REGION"; exit 1; }
+          [[ "$INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]] || { echo "::error::Set aws-development variable AWS_DEV_INSTANCE_ID"; exit 1; }
+          [[ "$ROLE_ARN" == arn:aws:iam::*:role/* ]] || { echo "::error::Set aws-development secret AWS_ROLE_TO_ASSUME"; exit 1; }
+
+      - name: Assume AWS role via GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: shererp-github-dev-deploy
+
+      - name: Execute fixed deployment hook through SSM
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Only the reviewed main-branch commit can be requested. No
+          # workflow input is interpolated into the remote shell command.
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          jq -n --arg sha "$GITHUB_SHA"             '{commands: [
+              "set -eu",
+              "test -x /usr/local/sbin/shererp-deploy-dev",
+              ("/usr/local/sbin/shererp-deploy-dev " + $sha)
+            ]}' > "$RUNNER_TEMP/shererp-ssm-parameters.json"
+
+          # Do not start stopped instances automatically; this keeps AWS
+          # compute charges under the owner's explicit control.
+          COMMAND_ID=$(aws ssm send-command             --instance-ids "$INSTANCE_ID"             --document-name AWS-RunShellScript             --parameters "file://$RUNNER_TEMP/shererp-ssm-parameters.json"             --comment "SherERP development deploy $GITHUB_SHA"             --timeout-seconds 1800             --query 'Command.CommandId' --output text)
+          echo "SSM command: $COMMAND_ID"
+
+          status=""
+          for attempt in $(seq 1 180); do
+            status=$(aws ssm get-command-invocation               --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"               --query Status --output text 2>/dev/null || true)
+            case "$status" in
+              Success) break ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                echo "::error::SSM deployment failed: $status"
+                aws ssm get-command-invocation                   --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"                   --query '{Status:Status,StandardError:StandardErrorContent}' --output json || true
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+
+          [[ "$status" == Success ]] || { echo "::error::SSM deployment timed out"; exit 1; }
+          aws ssm get-command-invocation             --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"             --query '{Status:Status,Output:StandardOutputContent}' --output json

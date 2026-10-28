@@ -8928,7 +8928,7 @@
       "fields": [
         {
           "id": "query",
-          "label": "Search products, parties and documents",
+          "label": "Search products, customers, suppliers and documents",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",

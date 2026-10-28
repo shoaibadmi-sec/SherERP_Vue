@@ -2,7 +2,16 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+  workflow_call:
+
+# A PR already gets a pull_request run. Avoid duplicating it on each
+# feature-branch push, and cancel superseded runs to conserve CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # ---------------------------------------------------------------- the gates
@@ -55,6 +64,10 @@ jobs:
 
       # Order is binding: lint, typecheck, boundaries, test. All must pass.
       - run: pnpm lint
+      # Internal workspace packages declare types at dist/*.d.ts. A fresh
+      # checkout must build them before tsc can resolve imports such as
+      # @sher/shared-utils (CI run 40688851818 failed without this).
+      - run: pnpm --filter "./packages/**" build
       - run: pnpm typecheck
       - run: pnpm test:boundaries
 
