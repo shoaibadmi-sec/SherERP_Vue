@@ -2809,16 +2809,16 @@
       ],
       "dropdowns": [
         {
-          "id": "customerId",
-          "label": "Or pick a saved customer",
-          "optionsExpression": "customerOptions",
+          "id": "line.vendorPartyId",
+          "label": "Which vendor — কোন ভেন্ডার",
+          "optionsExpression": "vendorOptions",
           "searchable": true,
           "dependsOn": []
         },
         {
-          "id": "line.vendorPartyId",
-          "label": "Which vendor — কোন ভেন্ডার",
-          "optionsExpression": "vendorOptions",
+          "id": "customerId",
+          "label": "Or pick a saved customer",
+          "optionsExpression": "customerOptions",
           "searchable": true,
           "dependsOn": []
         },
@@ -8928,7 +8928,7 @@
       "fields": [
         {
           "id": "query",
-          "label": "Search products, parties and documents",
+          "label": "Search products, customers, suppliers and documents",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",
