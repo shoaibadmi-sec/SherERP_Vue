@@ -27,6 +27,9 @@ test.describe('HisabIQ cart-first POS', () => {
     await expect(page.locator('.cart__qty input').first()).toBeFocused();
     await page.locator('.cart__qty input').first().press('Enter');
     await expect(search).toBeFocused();
+    await page.locator('.cart__line-total').first().focus();
+    await page.keyboard.press('F2');
+    await expect(search).toBeFocused();
 
     // An existing product remains in the editable cart, not only a tile.
     await expect(page.getByRole('complementary', { name: 'Sale cart' })).toContainText(PRODUCT_A.name);
