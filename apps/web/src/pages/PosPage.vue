@@ -923,6 +923,11 @@ function moveHighlight(by: number): void {
 }
 
 function onKey(event: KeyboardEvent): void {
+  if (event.key === 'F2') {
+    event.preventDefault();
+    void focusSearch();
+    return;
+  }
   if (event.key === 'F4' && readyToSell.value && !saving.value) {
     event.preventDefault();
     confirming.value = true;
@@ -1131,6 +1136,7 @@ onBeforeUnmount(() => {
           id="pos-search"
           v-model="search"
           aria-label="Scan barcode or search products"
+          aria-keyshortcuts="F2"
           class="scanbar__input"
           type="search"
           inputmode="search"
