@@ -2,8 +2,16 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_call:
+
+# A PR already gets a pull_request run. Avoid duplicating it on each
+# feature-branch push, and cancel superseded runs to conserve CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # ---------------------------------------------------------------- the gates
