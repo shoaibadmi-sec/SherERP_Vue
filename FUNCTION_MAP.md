@@ -125,6 +125,9 @@ adjustments, cost-adjustments, lots, openings, valuation), `/api/v1/imports` + `
 
 ## 8. Web — `apps/web/src/`
 
+**POS (HisabIQ Vue UI adaptation, 2026-10-29):** `pages/PosPage.vue` keeps the existing cart pricing, posting, stock sourcing, drafts, customer and payment handlers. The `cart__editing` / `cart__checkout` visual wrappers follow the HisabIQ cart-first desktop layout and stack on tablet/phone. Product-search Enter calls `focusCartQuantity()`, and quantity Enter calls `onCartQuantityEnter()` to return to search. The selectors and behavior have focused tests in `apps/web/e2e/pos-hisabiq-ui.spec.ts` and `mobile-pos-hisabiq.spec.ts`; existing daily sale E2E remains authoritative for posting. `design/tokens.css` defines scoped light/dark `--sher-pos-*` variables, leaving all other modules unchanged. **Scope:** This is first-pass UI migration, not yet complete multi-tier unit parity with the React reference.
+
+
 | Piece | Location | When to reuse |
 |---|---|---|
 | `request()`, `ApiError`, `loadConfig()` | `api/client.ts` | Every call. Handles the runtime `/config.json` base URL (UI-07), token renewal and the error envelope |
