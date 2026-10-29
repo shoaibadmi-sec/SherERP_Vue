@@ -113,6 +113,8 @@ describe('CatalogPage', () => {
   });
 
   it("shows the server's own code and message on failure (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     load.mockRejectedValue(new ApiError('PERMISSION_DENIED', 'Permission required', 403));
 
     const wrapper = await mountLoaded();
