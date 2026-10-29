@@ -6,8 +6,9 @@
  */
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import { MANAGER } from './support/seed';
-import { signIn } from './support/ui';
+import { MANAGER, tokenFor } from './support/seed';
+import { call } from './support/api';
+import { baseline, signIn, today } from './support/ui';
 
 async function capture(page: Page, testInfo: TestInfo, name: string): Promise<void> {
   await page.screenshot({
@@ -40,9 +41,23 @@ async function noHorizontalPageOverflow(page: Page): Promise<void> {
 
 test('desktop Party workspace retains two aligned panels and legible ledger', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  // A journal-backed amount large enough to expose truncated money columns.
+  // Only the isolated E2E tenant is modified; no fake UI figures.
+  const seeded = baseline();
+  const token = await tokenFor(MANAGER);
+  await call(`/api/v1/parties/${seeded.customerId}/opening`, {
+    method: 'POST', token, idempotent: true,
+    body: { role: 'CUSTOMER', direction: 'RECEIVABLE', amountMinor: 123_456_789, businessDate: today() },
+  });
+  const posted = await call<{ balance: { netMinor: number } }>(
+    `/api/v1/parties/${seeded.customerId}`, { token },
+  );
+  expect(posted.balance.netMinor).toBe(123_456_789);
   await signIn(page, MANAGER);
   await page.goto('/parties?role=CUSTOMER');
   await expect(page.getByRole('region', { name: /E2E Customer ledger/i })).toBeVisible();
+  await expect(page.getByRole('region', { name: /E2E Customer ledger/i })
+    .getByRole('row', { name: /Opening balance/i })).toBeVisible();
   await noHorizontalPageOverflow(page);
 
   const layout = await page.evaluate(() => {
