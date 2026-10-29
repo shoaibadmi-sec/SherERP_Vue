@@ -866,9 +866,24 @@ td.mono {
 }
 .party-more-actions summary::-webkit-details-marker { display: none; }
 .party-more-actions summary:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: 2px; }
+/* A real compact More menu, never a full-width banner between the CTA
+   buttons and the ledger. Native details keeps keyboard/touch support. */
 .party-more-panel {
-  display: flex; flex-wrap: wrap; gap: var(--sher-space-2);
-  padding-top: var(--sher-space-2);
+  position: absolute; z-index: 10;
+  top: calc(100% + 4px); right: 0;
+  display: flex; flex-direction: column; gap: var(--sher-space-1);
+  min-width: 220px; max-width: min(280px, 90vw);
+  padding: var(--sher-space-2);
+  border: 1px solid var(--sher-line);
+  border-radius: var(--sher-radius);
+  background: var(--sher-raised);
+  box-shadow: var(--sher-shadow);
 }
-.embedded-ledger .party-more-actions { width: 100%; }
+.party-more-panel .btn {
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+@media print { .party-more-actions { display: none !important; } }
 </style>
