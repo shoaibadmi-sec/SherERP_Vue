@@ -821,8 +821,8 @@
 | **Required fields** | — |
 | **Optional fields** | ledger-from, ledger-to, ledger-page-size |
 | **Dropdowns** | ledger-page-size |
-| **Primary action** | Vendor workspace, Receive payment, New sale, Pay supplier |
-| **Secondary actions** | ← Back to list, New purchase, Edit details, Set opening balance, Print statement, Show more |
+| **Primary action** | Vendor workspace, Receive payment, Pay supplier |
+| **Secondary actions** | ← Back to list, New sale, New purchase, Edit details, Set opening balance, Print statement, Show more |
 | **Row actions** | — |
 | **Destructive actions** | — |
 | **Opens** | PartyOpeningDialog, ReceivePaymentDialog, PaySupplierDialog |
@@ -834,7 +834,7 @@
 | **Desktop / mobile** | desktop |
 | **Responsible tests** | playwright, playwright-mobile |
 | **Status** | 🟡 PARTIALLY TESTED |
-| **Gaps** | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action New sale, action Pay supplier |
+| **Gaps** | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action Pay supplier |
 
 ### PeriodsPage
 
