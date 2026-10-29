@@ -3,8 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 import type { Page } from '@playwright/test';
-import sharedUtils from '@sher/shared-utils';
-const { SystemClock } = sharedUtils;
+import { createRequire } from 'node:module';
+import type * as SherSharedUtils from '@sher/shared-utils';
+const requireShared = createRequire(import.meta.url);
+const { SystemClock } = requireShared('@sher/shared-utils') as typeof SherSharedUtils;
 
 import type { Baseline } from './seed';
 
