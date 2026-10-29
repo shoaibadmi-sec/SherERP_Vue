@@ -1,0 +1,51 @@
+name: Party workspace browser checks
+
+on:
+  push:
+    branches:
+      - feat/hisabiq-unified-party-vue-workspace
+  workflow_dispatch:
+
+jobs:
+  party-browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://postgres:dev@localhost:5432/sher_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the real API and its workspace dependencies
+        run: pnpm --filter "@sher/api..." build
+      - name: Install Chromium and browser dependencies
+        run: pnpm --filter @sher/web exec playwright install --with-deps chromium
+      - name: Check unified Party desktop and mobile workflows
+        run: pnpm --filter @sher/web exec playwright test party-hisabiq-workspace.spec.ts mobile-party-hisabiq.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: party-workspace-playwright
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
