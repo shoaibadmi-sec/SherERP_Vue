@@ -1,5 +1,8 @@
-import sharedUtils from '@sher/shared-utils';
-const { addDays, SystemClock } = sharedUtils;
+import { createRequire } from 'node:module';
+import type * as SherSharedUtils from '@sher/shared-utils';
+// Playwright runs Node ESM; the workspace package is built as CommonJS.
+const requireShared = createRequire(import.meta.url);
+const { addDays, SystemClock } = requireShared('@sher/shared-utils') as typeof SherSharedUtils;
 
 import { call, login, operationKey } from './api';
 
