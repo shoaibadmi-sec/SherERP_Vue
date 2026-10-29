@@ -24,6 +24,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { AppModule } from '../src/app.module';
 import { AppErrorFilter } from '../src/common/app-error.filter';
+import { PdfTextExtractor } from '../src/infrastructure/pdf-text-extractor';
 import { signToken, TEST_JWT_SECRET } from './support/auth';
 import type { SeededTenant } from './support/database';
 import { asTenant, prepareTestDatabase, resetDatabase, seedTenant, testPool } from './support/database';
@@ -103,6 +104,13 @@ function upload(name: string, bytes: Buffer): request.Test {
 }
 
 describe('a statement with text in it', () => {
+  it('loads pdf.js and extracts source text in the actual Node runtime', async () => {
+    // Fail here with the underlying parser error (rather than the public API's
+    // deliberately generic validation message) if its Node adapter is broken.
+    const lines = await new PdfTextExtractor().extract(new Uint8Array(fixture('statement.pdf')));
+    expect(lines.length).toBeGreaterThan(0);
+  });
+
   it('reads the rows, the dates and both balances', async () => {
     const response = await upload('statement.pdf', fixture('statement.pdf'));
 
