@@ -419,17 +419,12 @@ function balanceText(party: PartyResponse): string {
  * by direction would have made a supplier the shop owes look as comfortable as
  * a customer who has paid.
  */
-function isOutstanding(direction: string): boolean {
-  return role.value === 'CUSTOMER' ? direction === 'RECEIVABLE' : direction === 'PAYABLE';
-}
-
 function balanceClass(party: PartyResponse): string {
   const { direction } = party.balance;
   if (direction === 'SETTLED') return 'balance-settled';
-  // Multi-role people share one net journal regardless of the directory's role.
-  if (party.roles.length > 1) return direction === 'RECEIVABLE'
-    ? 'balance-advance' : 'balance-due';
-  return isOutstanding(direction) ? 'balance-due' : 'balance-advance';
+  // Mirror the HisabIQ directory: receivable teal/green, payable red.
+  // A multi-role person has a single net balance in the SherERP API.
+  return direction === 'RECEIVABLE' ? 'balance-receivable' : 'balance-payable';
 }
 
 /**
@@ -1290,12 +1285,11 @@ async function removeGroup(id: string, name: string): Promise<void> {
 }
 
 /* Outstanding is the one that needs attention, so it is the loud one. */
-.balance-due {
-  color: var(--sher-bad-fg, #b91c1c);
+.balance-receivable {
+  color: var(--sher-party-teal-text);
 }
-
-.balance-advance {
-  color: var(--sher-ok-fg, #15803d);
+.balance-payable {
+  color: var(--sher-bad);
 }
 
 .balance-settled {
