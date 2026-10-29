@@ -1,6 +1,6 @@
 /*
  * HisabIQ Party workflow: mobile directory → one person's ledger → directory.
- * Does not modify the shop database.
+ * Creates its own isolated customer and opening through the real E2E API.
  * @covers screen:parties
  * @covers screen:party-ledger
  */
@@ -8,7 +8,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 import { MANAGER, tokenFor } from './support/seed';
 import { call } from './support/api';
-import { baseline, signIn, today } from './support/ui';
+import { signIn, today } from './support/ui';
 
 async function noPageOverflow(page: Page): Promise<void> {
   const overflow = await page.evaluate(
@@ -29,7 +29,20 @@ async function phoneScreenshot(page: Page, testInfo: TestInfo, label: string): P
 
 test('Party directory remains simple and navigable on a phone', async ({ page }, testInfo: TestInfo) => {
   const token = await tokenFor(MANAGER);
-  await call(`/api/v1/parties/${baseline().customerId}/opening`, {
+  // Desktop design-review specs already post an opening to E2E Customer.
+  // The full suite shares one database, so this mobile case must own its
+  // own customer instead of trying to post a second opening to that party.
+  const mobileCustomer = await call<{ id: string }>('/api/v1/parties', {
+    method: 'POST', token, idempotent: true,
+    body: {
+      name: 'E2E Mobile Customer',
+      roles: ['CUSTOMER'],
+      phone: '01709090909',
+      address: null, guardianName: null, nid: null, email: null,
+      notes: null, customerGroupId: null, creditLimitMinor: null,
+    },
+  });
+  await call(`/api/v1/parties/${mobileCustomer.id}/opening`, {
     method: 'POST', token, idempotent: true,
     body: { role: 'CUSTOMER', direction: 'RECEIVABLE', amountMinor: 987_654_321, businessDate: today() },
   });
@@ -42,7 +55,7 @@ test('Party directory remains simple and navigable on a phone', async ({ page },
   await noPageOverflow(page);
   await phoneScreenshot(page, testInfo, 'mobile-customer-directory');
 
-  await directory.getByRole('button', { name: /E2E Customer/i }).first().tap();
+  await directory.getByRole('button', { name: /E2E Mobile Customer/i }).first().tap();
   const back = page.getByRole('button', { name: /All people/i });
   await expect(back).toBeVisible();
   await expect(directory).toBeHidden();
