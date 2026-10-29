@@ -43,6 +43,10 @@ export default defineConfig({
 
   use: {
     baseURL: process.env['E2E_WEB_URL'] ?? 'http://127.0.0.1:5273',
+    // On CachyOS use its installed Chromium; CI keeps Playwright's bundled browser.
+    launchOptions: process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH']
+      ? { executablePath: process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'] }
+      : {},
     /** Kept only for a failure: a passing run should leave nothing behind. */
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
