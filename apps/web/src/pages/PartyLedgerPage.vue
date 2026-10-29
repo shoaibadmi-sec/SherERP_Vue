@@ -501,7 +501,7 @@ watch([partyId, role], () => {
       </nav>
       <p v-if="activityTab !== 'ALL'" class="party-filter-note" role="note">
         Showing {{ activityTab === 'INVOICES' ? 'invoice' : 'payment' }} entries from the loaded ledger.
-        Running balance still includes every transaction.
+        Totals and running balances still include every transaction.
       </p>
 
       <!--
@@ -601,7 +601,7 @@ watch([partyId, role], () => {
             -->
             <tfoot v-if="ledger !== null">
               <tr>
-                <td colspan="3" class="totals-label">Total for this period</td>
+                <td colspan="3" class="totals-label">{{ activityTab === 'ALL' ? 'Total for this period' : 'All transaction totals (period)' }}</td>
                 <td class="num">{{ money(ledger.totalDebitMinor) }}</td>
                 <td class="num">{{ money(ledger.totalCreditMinor) }}</td>
                 <td class="num closing-cell">
@@ -643,7 +643,7 @@ watch([partyId, role], () => {
             </div>
           </li>
           <li v-if="ledger !== null" class="party-mobile-total">
-            <strong>Total for this period <span class="sher-bn">মোট</span></strong>
+            <strong>{{ activityTab === 'ALL' ? 'Total for this period' : 'All transaction totals (period)' }} <span class="sher-bn">মোট</span></strong>
             <div class="party-mobile-entry-amounts">
               <span>Debit {{ money(ledger.totalDebitMinor) }}</span>
               <span>Credit {{ money(ledger.totalCreditMinor) }}</span>
