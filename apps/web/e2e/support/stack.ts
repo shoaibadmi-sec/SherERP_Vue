@@ -3,7 +3,8 @@ import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-import { SystemClock } from '@sher/shared-utils';
+import sharedUtils from '@sher/shared-utils';
+const { SystemClock } = sharedUtils;
 
 import { assertE2eDatabase, E2E_DATABASE_URL, resetE2eDatabase } from './database';
 import { E2E_API_URL } from './api';
