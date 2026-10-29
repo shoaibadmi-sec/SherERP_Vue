@@ -33,14 +33,20 @@ import PartyFormPage from './PartyFormPage.vue';
  * means reversing and reposting the document that produced it (§2.5), which
  * happens on that document's own screen.
  */
+const props = withDefaults(defineProps<{
+  embedded?: boolean;
+  embeddedPartyId?: string | null;
+  embeddedRole?: PartyRoleValue;
+}>(), { embedded: false, embeddedPartyId: null, embeddedRole: 'CUSTOMER' });
+const emit = defineEmits<{ back: []; updated: [] }>();
 const route = useRoute();
 const router = useRouter();
 const session = useSession();
-
-const partyId = computed(() => String(route.params.id ?? ''));
+const partyId = computed(() => props.embedded ? (props.embeddedPartyId ?? '') : String(route.params.id ?? ''));
 
 /** Which list to go back to. A party may hold several roles (D-04). */
 const role = computed<PartyRoleValue>(() => {
+  if (props.embedded) return props.embeddedRole;
   const value = route.query.role;
   return value === 'SUPPLIER' || value === 'VENDOR' ? value : 'CUSTOMER';
 });
@@ -75,6 +81,19 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200].map((value) => ({ label: String(value),
 const pageSize = ref<number>(50);
 
 const rows = computed(() => ledger.value?.rows ?? []);
+type ActivityTab = 'ALL' | 'INVOICES' | 'PAYMENTS';
+const activityTab = ref<ActivityTab>('ALL');
+const activityTabs: ReadonlyArray<{ id: ActivityTab; label: string; bn: string }> = [
+  { id: 'ALL', label: 'Ledger', bn: 'খাতা' },
+  { id: 'INVOICES', label: 'Invoices', bn: 'বিল' },
+  { id: 'PAYMENTS', label: 'Payments', bn: 'টাকা' },
+];
+const visibleRows = computed(() => {
+  if (activityTab.value === 'ALL') return rows.value;
+  if (activityTab.value === 'INVOICES') return rows.value.filter((row) =>
+    ['SALE', 'SALE_RETURN', 'PURCHASE', 'PURCHASE_RETURN'].includes(row.sourceDocumentType));
+  return rows.value.filter((row) => ['PAYMENT', 'RECEIPT'].includes(row.sourceDocumentType));
+});
 
 async function load(cursor: string | null = null): Promise<void> {
   const token = session.accessToken.value;
@@ -162,7 +181,8 @@ function documentLabel(type: string): string {
 }
 
 function goBack(): void {
-  void router.push(`/parties?role=${role.value}`);
+  if (props.embedded) emit('back');
+  else void router.push(`/parties?role=${role.value}`);
 }
 
 /* ------------------------------------------------------------- the hub bits */
@@ -251,6 +271,7 @@ async function onPaymentReceived(): Promise<void> {
   // The balance above and the statement below are two readings of the lines
   // this receipt just wrote, so both are re-read — as the supplier path does.
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function onSupplierPaid(): Promise<void> {
@@ -258,6 +279,7 @@ async function onSupplierPaid(): Promise<void> {
   // The balance above and the statement below both move — they are two readings
   // of the lines this payment just wrote.
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function loadParty(): Promise<void> {
@@ -275,11 +297,13 @@ async function loadParty(): Promise<void> {
 async function onEdited(): Promise<void> {
   editing.value = false;
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function onOpeningSaved(): Promise<void> {
   openingOpen.value = false;
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 /**
@@ -305,19 +329,26 @@ onDataChanged(() => {
 });
 
 // A new party id means a different ledger, not another page of this one.
-watch(partyId, () => {
+watch([partyId, role], () => {
   ledger.value = null;
   party.value = null;
+  activityTab.value = 'ALL';
+  fromDate.value = '';
+  toDate.value = '';
   void load();
   void loadParty();
 });
 </script>
 
 <template>
-  <AppShell
-    title="Ledger"
-    :breadcrumb="['Dashboard', roleLabel, ledger?.partyName ?? 'Ledger']"
-    help-bn="এই পক্ষের সব লেনদেন আর বকেয়ার হিসাব"
+  <component
+    :is="embedded ? 'section' : AppShell"
+    v-bind="embedded ? {} : {
+      title: 'Ledger',
+      breadcrumb: ['Dashboard', roleLabel, ledger?.partyName ?? 'Ledger'],
+      helpBn: 'এই পক্ষের সব লেনদেন আর বকেয়ার হিসাব',
+    }"
+    :class="{ 'embedded-ledger': embedded }"
   >
     <AppCard>
       <!--
@@ -331,7 +362,7 @@ watch(partyId, () => {
       -->
       <div class="ledger-head">
         <div>
-          <button type="button" class="linkish no-print" @click="goBack">← Back to list</button>
+          <button v-if="!embedded" type="button" class="linkish no-print" @click="goBack">← Back to list</button>
           <!--
             §5.6's hub: the party's own details sit above their statement, so
             the operator can act on this person without leaving and searching
@@ -438,6 +469,13 @@ watch(partyId, () => {
       </div>
 
       <ErrorNotice v-if="failure !== null" :code="failure.code" :message="failure.message" />
+      <nav class="party-ledger-tabs no-print" aria-label="Party ledger sections">
+        <button v-for="tab in activityTabs" :key="tab.id" type="button"
+          class="party-ledger-tab" :class="{ 'is-active': activityTab === tab.id }"
+          :aria-current="activityTab === tab.id ? 'page' : undefined" @click="activityTab = tab.id">
+          {{ tab.label }} <span class="sher-bn">{{ tab.bn }}</span>
+        </button>
+      </nav>
 
       <!--
         The shared picker, not a native `<input type="date">`: the native one
@@ -485,9 +523,9 @@ watch(partyId, () => {
       </div>
 
       <EmptyState
-        v-if="!busy && rows.length === 0"
+        v-if="!busy && visibleRows.length === 0"
         icon="pi-book"
-        title="Nothing posted in this period"
+        :title="activityTab === 'ALL' ? 'Nothing posted in this period' : 'No matching entries in this period'"
       />
 
       <template v-else>
@@ -517,7 +555,7 @@ watch(partyId, () => {
                 </td>
               </tr>
 
-              <tr v-for="row in rows" :key="row.journalLineId">
+              <tr v-for="row in visibleRows" :key="row.journalLineId">
                 <td>{{ row.businessDate }}</td>
                 <td>{{ documentLabel(row.sourceDocumentType) }}</td>
                 <td class="mono">{{ row.sourceNumber }}</td>
@@ -604,7 +642,7 @@ watch(partyId, () => {
       @paid="onSupplierPaid"
       @close="paying = false"
     />
-  </AppShell>
+  </component>
 </template>
 
 <style scoped>
@@ -776,4 +814,27 @@ td.mono {
   justify-content: center;
   padding-top: 0.75rem;
 }
+
+/* HisabIQ underlined ledger tabs use the same posted journal. */
+.embedded-ledger { min-width: 0; }
+.embedded-ledger .ledger-head h1 { font-size: var(--sher-text-lg); font-weight: 600; }
+.embedded-ledger .hub-actions { gap: var(--sher-space-2); }
+.embedded-ledger .hub-actions .btn { min-height: var(--sher-control-h-sm); height: auto; font-size: var(--sher-text-sm); }
+.party-ledger-tabs {
+  display: flex; gap: var(--sher-space-4);
+  border-bottom: 1px solid var(--sher-line);
+  margin-top: var(--sher-space-3); overflow-x: auto;
+}
+.party-ledger-tab {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: var(--sher-space-3) var(--sher-space-1);
+  border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--sher-text-muted);
+  font: inherit; font-size: var(--sher-text-sm); white-space: nowrap; cursor: pointer;
+}
+.party-ledger-tab.is-active {
+  border-bottom-color: var(--sher-primary); color: var(--sher-primary-text); font-weight: 600;
+}
+.party-ledger-tab:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
+@media print { .party-ledger-tabs { display: none; } }
 </style>
