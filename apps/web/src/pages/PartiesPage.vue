@@ -617,6 +617,10 @@ async function removeGroup(id: string, name: string): Promise<void> {
     :title="PAGE_COPY[role].title"
     :breadcrumb="['Dashboard', PAGE_COPY[role].title]"
     :help-bn="PAGE_COPY[role].helpBn"
+    :class="{
+      'party-workspace-view': workspaceMode === 'WORKSPACE',
+      'party-detail-open': workspaceMode === 'WORKSPACE' && selectedPartyId !== null,
+    }"
   >
     <template #actions>
       <button
@@ -1628,6 +1632,11 @@ tbody tr.is-inactive td:not(.actions) {
 .party-directory-person:focus-visible, .party-sort:focus-visible,
 .party-mobile-back:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
 @media (max-width: 63.99rem) {
+  /* On a selected person's screen, use the scarce first-screen space for the
+     name, balance and ledger—not the directory's Add/Import header and tabs.
+     The labelled All people button takes the user straight back to these. */
+  .party-detail-open :deep(.page-head),
+  .party-detail-open .party-role-tabs { display: none; }
   .party-workspace-grid { grid-template-columns: minmax(0, 1fr); }
   .party-workspace-grid.has-selection .party-directory { display: none; }
   .party-workspace-grid:not(.has-selection) .party-detail { display: none; }
@@ -1641,6 +1650,17 @@ tbody tr.is-inactive td:not(.actions) {
   }
 }
 @media (max-width: 40rem) {
+  /* The original stacked Add and Import actions cost two whole phone rows.
+     Give Add its 48px primary tap target and keep Import alongside it. */
+  .party-workspace-view :deep(.page-actions) {
+    display: flex; align-items: center; gap: var(--sher-space-2);
+  }
+  .party-workspace-view :deep(.page-actions .btn-primary) {
+    order: -1; flex: 1; min-width: 0; height: 48px;
+  }
+  .party-workspace-view :deep(.page-actions .btn-ghost) {
+    flex: 0 0 auto; height: 40px;
+  }
   .party-mode-switch { font-size: 0; }
   .party-mode-switch i { font-size: var(--sher-text-base); }
   .party-role-tabs { gap: var(--sher-space-3); }
