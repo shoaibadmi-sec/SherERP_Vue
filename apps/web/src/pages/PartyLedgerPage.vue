@@ -615,6 +615,48 @@ watch([partyId, role], () => {
           </table>
         </div>
 
+        <!-- The desktop statement's six columns cannot fit a phone: a
+             sideways-scroll table hides the running balance. Mobile shows
+             the same posted journal data as accessible compact rows. -->
+        <ul class="party-mobile-journal" aria-label="Party transactions">
+          <li v-if="ledger !== null" class="party-mobile-opening">
+            <span>Opening balance <span class="sher-bn">শুরুর জের</span></span>
+            <strong :class="balanceClass(ledger.openingBalance.direction)">
+              {{ balanceText(ledger.openingBalance) }}
+            </strong>
+          </li>
+          <li v-for="row in visibleRows" :key="row.journalLineId" class="party-mobile-entry">
+            <div class="party-mobile-entry-head">
+              <strong>{{ documentLabel(row.sourceDocumentType) }}</strong>
+              <time>{{ row.businessDate }}</time>
+            </div>
+            <p class="party-mobile-document">{{ row.sourceNumber }}</p>
+            <div class="party-mobile-entry-amounts">
+              <span v-if="row.debitMinor !== 0">Debit <span class="sher-bn">ডেবিট</span> {{ money(row.debitMinor) }}</span>
+              <span v-if="row.creditMinor !== 0">Credit <span class="sher-bn">ক্রেডিট</span> {{ money(row.creditMinor) }}</span>
+            </div>
+            <div class="party-mobile-running">
+              <span>Balance <span class="sher-bn">জের</span></span>
+              <strong :class="runningBalanceClass(row.runningBalanceMinor)">
+                {{ runningBalanceText(row.runningBalanceMinor) }}
+              </strong>
+            </div>
+          </li>
+          <li v-if="ledger !== null" class="party-mobile-total">
+            <strong>Total for this period <span class="sher-bn">মোট</span></strong>
+            <div class="party-mobile-entry-amounts">
+              <span>Debit {{ money(ledger.totalDebitMinor) }}</span>
+              <span>Credit {{ money(ledger.totalCreditMinor) }}</span>
+            </div>
+            <div class="party-mobile-running">
+              <span>{{ closingLabel }} <span class="sher-bn">{{ closingLabelBn }}</span></span>
+              <strong :class="balanceClass(ledger.closingBalance.direction)">
+                {{ closingAmount }} <span class="sher-bn">{{ closingWord }}</span>
+              </strong>
+            </div>
+          </li>
+        </ul>
+
         <div v-if="ledger?.page.hasMore" class="paging">
           <button
             type="button"
@@ -850,6 +892,41 @@ td.mono {
 .embedded-ledger .ledger-head h2 { font-size: var(--sher-text-lg); font-weight: 600; }
 .embedded-ledger .hub-actions { gap: var(--sher-space-2); }
 .embedded-ledger .hub-actions .btn { min-height: var(--sher-control-h-sm); height: auto; font-size: var(--sher-text-sm); }
+/* Dense table on wide screens; legible, complete transaction rows on phones. */
+.party-mobile-journal { display: none; list-style: none; margin: 0; padding: 0; }
+@media screen and (max-width: 40rem) {
+  .table-wrap { display: none; }
+  .party-mobile-journal { display: flex; flex-direction: column; border: 1px solid var(--sher-line); border-radius: var(--sher-radius); overflow: hidden; }
+  .party-mobile-journal > li {
+    min-width: 0; padding: var(--sher-space-3);
+    border-bottom: 1px solid var(--sher-line-soft); font-size: var(--sher-text-sm);
+    font-variant-numeric: normal;
+  }
+  .party-mobile-journal > li:last-child { border-bottom: none; }
+  .party-mobile-opening, .party-mobile-running, .party-mobile-entry-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: var(--sher-space-2);
+  }
+  .party-mobile-opening, .party-mobile-total { background: var(--sher-sunken); }
+  .party-mobile-entry-head time {
+    color: var(--sher-text-muted); font-size: var(--sher-text-xs);
+  }
+  .party-mobile-document {
+    margin: 3px 0 var(--sher-space-2); color: var(--sher-text-muted);
+    font-size: var(--sher-text-xs); overflow-wrap: anywhere;
+  }
+  .party-mobile-entry-amounts {
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: var(--sher-space-2); color: var(--sher-text-muted);
+    font-size: var(--sher-text-xs);
+  }
+  .party-mobile-running { margin-top: var(--sher-space-2); }
+  .party-mobile-running strong { font-weight: 600; overflow-wrap: anywhere; text-align: right; }
+  .party-mobile-journal .sher-bn { font-size: var(--sher-text-xs); }
+  .party-mobile-total > strong { display: block; margin-bottom: var(--sher-space-2); }
+}
+@media print { .party-mobile-journal { display: none !important; } }
+
 .party-ledger-tabs {
   display: flex; gap: var(--sher-space-4);
   border-bottom: 1px solid var(--sher-line);
