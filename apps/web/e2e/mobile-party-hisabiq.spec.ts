@@ -6,9 +6,9 @@
  */
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import { MANAGER, tokenFor } from './support/seed';
+import { MANAGER } from './support/seed';
 import { call } from './support/api';
-import { signIn, today } from './support/ui';
+import { baseline, signIn, today } from './support/ui';
 
 async function noPageOverflow(page: Page): Promise<void> {
   const overflow = await page.evaluate(
@@ -28,7 +28,7 @@ async function phoneScreenshot(page: Page, testInfo: TestInfo, label: string): P
 }
 
 test('Party directory remains simple and navigable on a phone', async ({ page }, testInfo: TestInfo) => {
-  const token = await tokenFor(MANAGER);
+  const token = baseline().ownerToken;
   // Desktop design-review specs already post an opening to E2E Customer.
   // The full suite shares one database, so this mobile case must own its
   // own customer instead of trying to post a second opening to that party.
