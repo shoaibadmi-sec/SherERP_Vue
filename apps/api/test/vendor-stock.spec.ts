@@ -116,6 +116,18 @@ beforeEach(async () => {
   token = signToken(tenant, TEST_JWT_SECRET);
   // Every fully paid guest sale points at it (D-02).
   await seedWalkInCustomer(pool, tenant);
+  // Production signup provisions Main Shop, but seedTenant intentionally
+  // creates only an identity. Vendor receipts require that default stock
+  // location. Add it to this isolated tenant fixture, not to application code.
+  await asTenant(pool, tenant.tenantId, async (client) => {
+    const now = clock.now();
+    await client.query(
+      `INSERT INTO inventory_locations
+       (id, tenant_id, name, is_default, created_at, updated_at, created_by, updated_by, version)
+       VALUES ($1, $2, 'Main Shop', TRUE, $3, $3, $4, $4, 1)`,
+      [Ulid.generate(clock), tenant.tenantId, now, tenant.userId],
+    );
+  });
 
   /*
    * Consignment is switched off in a new shop and sits behind two parents
