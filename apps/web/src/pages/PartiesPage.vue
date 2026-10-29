@@ -665,7 +665,7 @@ async function removeGroup(id: string, name: string): Promise<void> {
           type="button"
           class="party-role-tab"
           :class="{ 'is-active': role === choice }"
-          :aria-current="role === choice ? 'page' : undefined"
+          :aria-current="role === choice ? 'page' : 'false'"
           @click="changePartyRole(choice)"
         >
           <i :class="ROLE_LABELS[choice].icon" aria-hidden="true" />
@@ -718,7 +718,7 @@ async function removeGroup(id: string, name: string): Promise<void> {
                 type="button"
                 class="party-directory-person"
                 :class="{ 'is-selected': selectedPartyId === person.id }"
-                :aria-current="selectedPartyId === person.id ? 'true' : undefined"
+                :aria-current="selectedPartyId === person.id ? 'true' : 'false'"
                 :aria-label="`${person.name}, ${balanceText(person)}`"
                 @click="chooseParty(person)"
               >
