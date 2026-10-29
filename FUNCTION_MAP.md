@@ -125,6 +125,9 @@ adjustments, cost-adjustments, lots, openings, valuation), `/api/v1/imports` + `
 
 ## 8. Web — `apps/web/src/`
 
+**HisabIQ unified Party workspace (2026-10-29):** `pages/PartiesPage.vue` hosts an accessible role-specific directory and embeds the real `PartyLedgerPage.vue` through `embedded`/`embeddedPartyId`/`embeddedRole` props. It preserves role-scoped `fetchParties`, keyset paging, balance colors, original full-table management, PartyFormPage editing, permissions, supplier settlement and POS customer links. Ledger's `activityTab` filters already loaded journal rows for Ledger / Invoices / Payments, without modifying journal calculations. Selection deep-links use `/parties?role=ROLE&id=ULID`, while `/parties/:id/ledger` remains supported. Phone/tablet select a name then open the detail; desktop uses simultaneous directory and ledger. `design/tokens.css` adds theme-safe `--sher-party-*` tokens. Relevant Playwright coverage: `party-hisabiq-workspace.spec.ts`, `mobile-party-hisabiq.spec.ts`. Backend support currently covers CUSTOMER, SUPPLIER and VENDOR only; finance persons from the React reference are not migrated as new server roles.
+
+
 | Piece | Location | When to reuse |
 |---|---|---|
 | `request()`, `ApiError`, `loadConfig()` | `api/client.ts` | Every call. Handles the runtime `/config.json` base URL (UI-07), token renewal and the error envelope |
