@@ -51,6 +51,13 @@ test('Party directory remains simple and navigable on a phone', async ({ page },
   await expect(page.getByRole('navigation', { name: 'Party ledger sections' })).toBeVisible();
   await noPageOverflow(page);
   await phoneScreenshot(page, testInfo, 'mobile-customer-ledger');
+  const journal = page.getByRole('list', { name: 'Party transactions' });
+  await expect(journal).toBeVisible();
+  await expect(journal.locator('.party-mobile-entry')).toHaveCount(1);
+  await expect(page.locator('.embedded-ledger .table-wrap')).toBeHidden();
+  await expect(journal).toContainText('9,876,543.21');
+  await journal.locator('.party-mobile-entry').scrollIntoViewIfNeeded();
+  await phoneScreenshot(page, testInfo, 'mobile-customer-transaction');
 
   await back.tap();
   await expect(directory).toBeVisible();
