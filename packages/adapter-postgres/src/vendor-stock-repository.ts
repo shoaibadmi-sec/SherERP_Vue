@@ -7,10 +7,12 @@ import type {
   VendorStockRepository,
 } from '@sher/core-application';
 import type { Clock } from '@sher/shared-utils';
+import { Ulid } from '@sher/shared-utils';
 import { and, eq, gte, sql } from 'drizzle-orm';
 
 import {
   inventoryLots,
+  productCostState,
   stockMovements,
   vendorStockReceipts,
   vendorStockReturns,
@@ -148,6 +150,34 @@ export class PostgresVendorStockRepository implements VendorStockRepository {
       unitCost: receipt.vendorUnitCost,
     });
 
+    // Vendor property is excluded from inventory *value*, not from physical
+    // quantity. Maintain the per-location quantity cache in the same
+    // transaction as the lot and stock movement (INV-02, INV-04). The vendor
+    // receipt carries no monetary asset and must not change avg unit cost.
+    await db.insert(productCostState).values({
+      id: Ulid.generate(this.clock),
+      tenantId: ctx.tenantId,
+      productId: receipt.productId,
+      locationId: receipt.locationId,
+      avgUnitCost: 0,
+      qtyOnHand: receipt.qty,
+      lastRecomputedAt: now,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: ctx.userId,
+      updatedBy: ctx.userId,
+      version: 1,
+    }).onConflictDoUpdate({
+      target: [productCostState.tenantId, productCostState.productId, productCostState.locationId],
+      set: {
+        qtyOnHand: sql`${productCostState.qtyOnHand} + ${receipt.qty}`,
+        lastRecomputedAt: now,
+        updatedAt: now,
+        updatedBy: ctx.userId,
+        version: sql`${productCostState.version} + 1`,
+      },
+    });
+
     await db.insert(vendorStockReceipts).values({
       id: receipt.id,
       tenantId: ctx.tenantId,
@@ -216,6 +246,22 @@ export class PostgresVendorStockRepository implements VendorStockRepository {
       .returning({ id: inventoryLots.id });
     if (updatedLot.length === 0) {
       throw new Error('Vendor stock changed while this return was being posted');
+    }
+
+    const stateUpdated = await db.update(productCostState).set({
+      qtyOnHand: sql`${productCostState.qtyOnHand} - ${record.qty}`,
+      lastRecomputedAt: now,
+      updatedAt: now,
+      updatedBy: ctx.userId,
+      version: sql`${productCostState.version} + 1`,
+    }).where(and(
+      eq(productCostState.tenantId, ctx.tenantId),
+      eq(productCostState.productId, record.productId),
+      eq(productCostState.locationId, record.locationId),
+      gte(productCostState.qtyOnHand, record.qty),
+    )).returning({ id: productCostState.id });
+    if (stateUpdated.length !== 1) {
+      throw new Error('Physical vendor stock position changed before this return could post');
     }
 
     await db.insert(vendorStockReturns).values({
