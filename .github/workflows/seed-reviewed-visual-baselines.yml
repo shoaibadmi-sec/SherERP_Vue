@@ -1,0 +1,73 @@
+# One-time seed of the six existing visual.spec.ts screenshot references.
+# The screenshots were visually reviewed from the isolated CI browser artifacts.
+# Deliberately limited to this draft branch and to changes to this file only.
+name: Seed reviewed visual baselines
+
+on:
+  push:
+    branches:
+      - feat/hisabiq-unified-party-vue-workspace
+    paths:
+      - .github/workflows/seed-reviewed-visual-baselines.yml
+
+permissions:
+  contents: write
+
+jobs:
+  seed-baselines:
+    if: github.repository == 'shoaibadmi-sec/SherERP_Vue'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://postgres:dev@localhost:5432/sher_e2e
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/hisabiq-unified-party-vue-workspace
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@sher/api..." build
+      - run: pnpm --filter @sher/web exec playwright install --with-deps chromium
+      - name: Generate six visual reference PNGs in isolated E2E Chromium
+        run: pnpm --filter @sher/web exec playwright test visual.spec.ts --project=desktop --update-snapshots
+      - name: Commit only the six baseline PNGs to the draft branch
+        run: |
+          set -euo pipefail
+          git add apps/web/e2e/visual.spec.ts-snapshots/*.png
+          count="$(git diff --cached --name-only | wc -l)"
+          if [ "$count" -ne 6 ]; then
+            echo "Expected exactly six new baseline PNGs, found $count"
+            exit 1
+          fi
+          git diff --cached --name-only
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "test(visual): commit six reviewed Linux Chromium baselines"
+          git push origin HEAD:feat/hisabiq-unified-party-vue-workspace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reviewed-visual-baselines
+          path: apps/web/e2e/visual.spec.ts-snapshots
+          retention-days: 14
+          if-no-files-found: warn
