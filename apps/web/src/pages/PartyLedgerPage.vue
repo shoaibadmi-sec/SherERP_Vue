@@ -152,6 +152,9 @@ function balanceText(balance: PartyLedgerResponse['openingBalance']): string {
  */
 function balanceClass(direction: string): string {
   if (direction === 'SETTLED') return 'balance-settled';
+  // A multi-role party has one shared journal, so label and color its net direction.
+  if ((party.value?.roles.length ?? 0) > 1) return direction === 'RECEIVABLE'
+    ? 'balance-advance' : 'balance-due';
   const outstanding =
     role.value === 'CUSTOMER' ? direction === 'RECEIVABLE' : direction === 'PAYABLE';
   return outstanding ? 'balance-due' : 'balance-advance';
@@ -202,8 +205,10 @@ const RIGHTS: Record<PartyRoleValue, string> = {
 const canEdit = computed(() => session.can(RIGHTS[role.value]));
 
 /** §5.6: the same figure, named for the role reading it. */
-const closingLabel = computed(() => (role.value === 'CUSTOMER' ? 'Current Due' : 'Payable'));
-const closingLabelBn = computed(() => (role.value === 'CUSTOMER' ? 'পাবো' : 'দিব'));
+const closingLabel = computed(() => (party.value?.roles.length ?? 0) > 1
+  ? 'Net balance' : role.value === 'CUSTOMER' ? 'Current Due' : 'Payable');
+const closingLabelBn = computed(() => (party.value?.roles.length ?? 0) > 1
+  ? 'মোট জের' : role.value === 'CUSTOMER' ? 'পাবো' : 'দিব');
 
 /** The closing balance split into its word and its amount, for the totals row. */
 const closingWord = computed(() => {
