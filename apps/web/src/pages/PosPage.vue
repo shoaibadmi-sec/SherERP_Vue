@@ -1168,60 +1168,8 @@ onBeforeUnmount(() => {
       <div class="pos__body">
         <!-- ------------------------------------------------------ the cart -->
         <aside class="panel cart" aria-label="Sale cart">
+          <div class="pos__left">
           <div class="cart__editing">
-          <!-- One bar, always ready: type a name, or let the scanner type for you. -->
-          <div class="scanbar">
-            <i class="pi pi-search scanbar__icon" aria-hidden="true" />
-            <input
-              id="pos-search"
-              v-model="search"
-              aria-label="Scan barcode or search products"
-              aria-keyshortcuts="F2"
-              class="scanbar__input"
-              type="search"
-              inputmode="search"
-              enterkeyhint="done"
-              placeholder="Scan barcode, or type any part of a name, brand or code…"
-              autocomplete="off"
-              autocapitalize="off"
-              autocorrect="off"
-              spellcheck="false"
-              @keydown.enter.prevent="onSearchEnter"
-              @keydown.down.prevent="moveHighlight(1)"
-              @keydown.up.prevent="moveHighlight(-1)"
-              @keydown.esc.prevent="clearSearch"
-            />
-            <button
-              v-if="search !== ''"
-              type="button"
-              class="scanbar__clear"
-              aria-label="Clear product search"
-              title="Clear (Esc)"
-              @click="clearSearch(); void focusSearch()"
-            >
-              <i class="pi pi-times" />
-            </button>
-            <button
-              v-if="drafts.length > 0"
-              type="button"
-              class="scanbar__drafts"
-              @click="showDrafts = true"
-            >
-              <i class="pi pi-inbox" /> Drafts ({{ drafts.length }})
-            </button>
-            <button
-              v-if="session.can('catalog.product.create')"
-              type="button"
-              class="scanbar__add"
-              aria-label="Add product"
-              title="Add a product"
-              @click="openAddProduct"
-            >
-              <i class="pi pi-plus" />
-            </button>
-          </div>
-
-
             <div class="cart__heading">
               <strong>Sale items <span class="label-bn">বিক্রির পণ্য</span></strong>
               <span>{{ lines.length }} {{ lines.length === 1 ? 'item' : 'items' }}</span>
@@ -1244,6 +1192,8 @@ onBeforeUnmount(() => {
               <div v-for="(line, index) in lines" :key="line.productId" class="cart__line">
                 <div class="cart__line-main" @keydown.enter="onCartQuantityEnter">
                   <div class="cart__line-name">
+                    <span class="cart__line-index" aria-hidden="true">{{ index + 1 }}.</span>
+                    <span class="cart__line-icon" aria-hidden="true"><i class="pi pi-box" /></span>
                     <span class="cart__line-title" :title="line.productName">
                       {{ line.productName }}
                     </span>
@@ -1455,6 +1405,61 @@ onBeforeUnmount(() => {
             </template>
           </div>
 
+          <!-- One bar, always ready: type a name, or let the scanner type for you. -->
+          <div class="scanbar">
+            <i class="pi pi-search scanbar__icon" aria-hidden="true" />
+            <input
+              id="pos-search"
+              v-model="search"
+              aria-label="Scan barcode or search products"
+              aria-keyshortcuts="F2"
+              class="scanbar__input"
+              type="search"
+              inputmode="search"
+              enterkeyhint="done"
+              placeholder="Scan barcode, or type any part of a name, brand or code…"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              @keydown.enter.prevent="onSearchEnter"
+              @keydown.down.prevent="moveHighlight(1)"
+              @keydown.up.prevent="moveHighlight(-1)"
+              @keydown.esc.prevent="clearSearch"
+            />
+            <button
+              v-if="search !== ''"
+              type="button"
+              class="scanbar__clear"
+              aria-label="Clear product search"
+              title="Clear (Esc)"
+              @click="clearSearch(); void focusSearch()"
+            >
+              <i class="pi pi-times" />
+            </button>
+            <button
+              v-if="drafts.length > 0"
+              type="button"
+              class="scanbar__drafts"
+              @click="showDrafts = true"
+            >
+              <i class="pi pi-inbox" /> Drafts ({{ drafts.length }})
+            </button>
+            <button
+              v-if="session.can('catalog.product.create')"
+              type="button"
+              class="scanbar__add"
+              aria-label="Add product"
+              title="Add a product"
+              @click="openAddProduct"
+            >
+              <i class="pi pi-plus" />
+            </button>
+          </div>
+
+
+          </div> <!-- Cart table and inline add-product search -->
+
             <!-- ------------------------------------------------ the catalogue -->
             <section class="panel catalogue" :class="{ 'catalogue--compact': lines.length > 0 }" aria-label="Find products">
               <div class="catalogue__heading">
@@ -1576,35 +1581,26 @@ onBeforeUnmount(() => {
               </div>
             </section>
 
-          </div>
+          </div> <!-- left cart and quick items -->
           <div class="cart__checkout">
           <div class="cart__checkout-header">
             <strong>New invoice <span class="label-bn">নতুন চালান</span></strong>
             <span>Customer &amp; payments</span>
           </div>
           <div class="cart__customer">
-            <div class="grid-2">
-              <label class="field">
-                <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
-                <InputText v-model="customerName" placeholder="Walk-in customer" />
-              </label>
-              <label class="field">
-                <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
-                <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
-              </label>
+            <div class="cart__customer-picker">
+              <i class="pi pi-user" aria-hidden="true" />
+              <Select
+                v-model="customerId"
+                :options="customerOptions"
+                option-label="label"
+                option-value="value"
+                filter
+                show-clear
+                placeholder="Walk-in customer · Select a customer"
+                class="cart__pick"
+              />
             </div>
-
-            <Select
-              v-model="customerId"
-              :options="customerOptions"
-              option-label="label"
-              option-value="value"
-              filter
-              show-clear
-              placeholder="Or pick a saved customer"
-              class="cart__pick"
-            />
-
             <p v-if="standing && standing.dueMinor > 0" class="standing standing--due">
               <span>Outstanding Due <span class="label-bn">আগের বাকি</span></span>
               <strong>{{ taka(standing.dueMinor) }}</strong>
@@ -1613,31 +1609,47 @@ onBeforeUnmount(() => {
               <span>Advance held <span class="label-bn">জমা আছে</span></span>
               <strong>{{ taka(standing.advanceMinor) }}</strong>
             </p>
-
-            <div class="cart__customer-links">
-              <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
-                {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
-              </button>
-              <button
-                type="button"
-                class="linkish"
-                :disabled="customerPhone.trim() === ''"
-                @click="router.push({ name: 'sales', query: { search: customerPhone } })"
-              >
-                Sales history for this phone
-              </button>
-            </div>
-
-            <div v-if="showMoreCustomer" class="grid-2">
-              <label class="field">
-                <span>Father Name <span class="label-bn">বাবার নাম</span></span>
-                <InputText v-model="guardianName" placeholder="Optional" />
-              </label>
-              <label class="field">
-                <span>Address <span class="label-bn">ঠিকানা</span></span>
-                <InputText v-model="address" placeholder="Optional" />
-              </label>
-            </div>
+            <details class="cart__invoice-customer-details">
+              <summary>
+                <span>Invoice customer details <span class="label-bn">ক্রেতার তথ্য</span></span>
+                <small>Name · Phone · Guardian · Address</small>
+              </summary>
+              <div class="cart__customer-fields">
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
+                    <InputText v-model="customerName" placeholder="Walk-in customer" />
+                  </label>
+                  <label class="field">
+                    <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
+                    <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
+                  </label>
+                </div>
+                <div class="cart__customer-links">
+                  <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
+                    {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="linkish"
+                    :disabled="customerPhone.trim() === ''"
+                    @click="router.push({ name: 'sales', query: { search: customerPhone } })"
+                  >
+                    Sales history for this phone
+                  </button>
+                </div>
+                <div v-if="showMoreCustomer" class="grid-2">
+                  <label class="field">
+                    <span>Father Name <span class="label-bn">বাবার নাম</span></span>
+                    <InputText v-model="guardianName" placeholder="Optional" />
+                  </label>
+                  <label class="field">
+                    <span>Address <span class="label-bn">ঠিকানা</span></span>
+                    <InputText v-model="address" placeholder="Optional" />
+                  </label>
+                </div>
+              </div>
+            </details>
           </div>
 
           <!-- Totals. Every one of these moves on every keystroke above. -->
@@ -2930,6 +2942,43 @@ onBeforeUnmount(() => {
   .catalogue--compact .grid,
   .catalogue--compact .list { max-height: 100px; }
 }
+/* Source checkout's compact customer picker with optional identity disclosure. */
+.cart__customer-picker { display:flex; align-items:center; gap:8px; width:100%; min-width:0; }
+.cart__customer-picker > i { flex:none; width:28px; height:28px; display:grid; place-items:center;
+  border:1px solid var(--sher-line); border-radius:7px; background:var(--sher-sunken);
+  color:var(--sher-text-muted); }
+.cart__customer-picker .cart__pick { flex:1; min-width:0; }
+.cart__invoice-customer-details { border:1px solid var(--sher-line); border-radius:9px; }
+.cart__invoice-customer-details > summary { list-style:none; position:relative; display:flex;
+  flex-direction:column; gap:4px; padding:10px 30px 10px 12px; cursor:pointer; font-size:12px;
+  font-weight:600; color:var(--sher-text); background:var(--sher-sunken); border-radius:9px; }
+.cart__invoice-customer-details > summary::-webkit-details-marker { display:none; }
+.cart__invoice-customer-details > summary::after { content:'⌄'; position:absolute; right:12px;
+  top:12px; font-size:14px; color:var(--sher-text-muted); }
+.cart__invoice-customer-details[open] > summary::after { transform:rotate(180deg); }
+.cart__invoice-customer-details summary small {font-size:10px; font-weight:400; color:var(--sher-text-muted);}
+.cart__customer-fields {display:flex; flex-direction:column; gap:9px; padding:10px; }
+.cart__invoice-customer-details :is(input,button):focus-visible,
+.cart__invoice-customer-details > summary:focus-visible {outline:2px solid var(--sher-pos-teal);outline-offset:2px;}
+/* HisabIQ layout parity: actual editable cart above standalone quick item cards. */
+.pos__left { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.cart__editing { min-width:0; }
+.cart__editing .scanbar { margin-top:10px; margin-bottom:0; min-height:40px; }
+.cart__line-name { display:grid; grid-template-columns:18px 28px minmax(0,1fr);
+  column-gap:6px; align-items:center; }
+.cart__line-index { grid-column:1; grid-row:1 / span 2; color:var(--sher-text-muted);
+  font-size:10px; font-weight:500; }
+.cart__line-icon { grid-column:2; grid-row:1 / span 2; width:28px; height:28px;
+  display:grid; place-items:center; background:var(--sher-sunken);
+  border:1px solid var(--sher-line); border-radius:6px; color:var(--sher-text-muted); }
+.cart__line-title { grid-column:3; grid-row:1; }
+.cart__line-sub { grid-column:3; grid-row:2; }
+.catalogue, .catalogue--compact { margin-top:0; padding:0; border:0; background:transparent; }
+.catalogue__heading { padding:0 1px; }
+.catalogue .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.catalogue .tile { border:1px solid var(--sher-line); border-radius:10px; background:var(--sher-raised); }
+.cart__checkout { align-self:start; }
+@media(max-width:40rem) { .catalogue .grid {grid-template-columns:repeat(2,minmax(0,1fr));} }
 /* Source-faithful HisabIQ POS hierarchy: cart first, quick items below, checkout right. */
 .pos__keyboard-hints {
   display: flex;

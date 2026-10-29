@@ -92,6 +92,31 @@ const loadError = ref<{ code: string; message: string } | null>(null);
 const products = ref<ProductResponse[]>([]);
 const summary = ref<ProductSummary>({ total: 0, active: 0, inactive: 0, withoutBarcode: 0 });
 const nextCursor = ref<string | null>(null);
+
+// HisabIQ-style column visibility is presentation-only. All amounts originate
+// from the existing authorized product response; no financial data is computed.
+type ProductColumn = 'index' | 'category' | 'stock' | 'stockValue' | 'unit' | 'purchase' | 'selling' | 'status';
+const productColumnLabels: { id: ProductColumn; label: string }[] = [
+  { id: 'index', label: '#' },
+  { id: 'category', label: 'Category' },
+  { id: 'stock', label: 'Stock' },
+  { id: 'stockValue', label: 'Stock value' },
+  { id: 'unit', label: 'Unit' },
+  { id: 'purchase', label: 'Purchase' },
+  { id: 'selling', label: 'Selling' },
+  { id: 'status', label: 'Status' },
+];
+const productColumns = ref<Record<ProductColumn, boolean>>({
+  index: true, category: true, stock: true, stockValue: true,
+  unit: true, purchase: true, selling: true, status: true,
+});
+const loadedStockValueMinor = computed(() =>
+  visibleProducts.value.reduce((value, product) => value + (product.stockValueMinor ?? 0), 0),
+);
+const lowStockCount = computed(() => visibleProducts.value.filter((p) => p.stockStatus === 'LOW_STOCK').length);
+const outStockCount = computed(() => visibleProducts.value.filter((p) =>
+  p.stockStatus === 'ZERO_STOCK' || p.stockStatus === 'NEGATIVE_STOCK').length);
+
 const catalog = ref<CatalogResponse>(EMPTY_CATALOG);
 
 /**
@@ -466,6 +491,14 @@ function stockPill(product: ProductResponse): string {
 
     <OfflineBar />
 
+    <!-- HisabIQ product overview. Loaded stock value is never mislabelled as whole-business valuation. -->
+    <section v-if="!loading && loadError === null" class="product-overview" aria-label="Product overview">
+      <div class="product-stat"><span>Products</span><strong>{{ summary.total }}</strong><small>{{ summary.active }} active</small></div>
+      <div v-if="canSeeCost" class="product-stat"><span>Stock value</span><strong>{{ money(loadedStockValueMinor) }}</strong><small>Loaded rows · at purchase cost</small></div>
+      <div class="product-stat"><span>Low stock</span><strong class="product-warning">{{ lowStockCount }}</strong><small>Loaded rows · below minimum</small></div>
+      <div class="product-stat"><span>Out of stock</span><strong class="product-danger">{{ outStockCount }}</strong><small>Loaded rows · needs reorder</small></div>
+    </section>
+
     <!-- UI-25: filters are visible, and what is filtered is readable at a glance -->
     <form class="filters" @submit.prevent="load">
       <div class="field grow">
@@ -552,6 +585,17 @@ function stockPill(product: ProductResponse): string {
           @change="load"
         />
       </div>
+
+      <details class="product-column-picker">
+        <summary><i class="pi pi-sliders-h" aria-hidden="true" /> Columns <i class="pi pi-chevron-down" aria-hidden="true" /></summary>
+        <div class="product-column-menu" aria-label="Visible product table columns">
+          <label v-for="column in productColumnLabels" :key="column.id">
+            <input v-model="productColumns[column.id]" type="checkbox"
+              :disabled="column.id === 'stock' || column.id === 'selling' || (column.id === 'stockValue' && !canSeeCost) || (column.id === 'purchase' && !canSeeCost)" />
+            {{ column.label }}
+          </label>
+        </div>
+      </details>
 
       <Button
         v-if="filtersActive"
@@ -664,13 +708,14 @@ function stockPill(product: ProductResponse): string {
         </ul>
 
         <div class="table-wrap">
-          <table>
+          <table class="hisabiq-products-table">
             <thead>
               <!--
                 UI-46: every one of these sorts on tap. The `⋯` column does not,
                 and is a plain `th` — it holds one action, not a value to order by.
               -->
               <tr>
+                <th v-if="productColumns.index" class="product-index">#</th>
                 <SortableHeader
                   column="name"
                   label="Product"
@@ -680,6 +725,7 @@ function stockPill(product: ProductResponse): string {
                   @sort="sortBy"
                 />
                 <SortableHeader
+                  v-if="productColumns.category"
                   column="categoryName"
                   label="Category"
                   label-bn="ধরন"
@@ -687,8 +733,11 @@ function stockPill(product: ProductResponse): string {
                   :direction="direction"
                   @sort="sortBy"
                 />
+                <th v-if="productColumns.stock" class="num"><span class="th-label">Stock <span class="sher-bn header-bn">স্টক</span></span></th>
+                <th v-if="canSeeCost && productColumns.stockValue" class="num"><span class="th-label">Stock value <span class="sher-bn header-bn">স্টক মূল্য</span></span></th>
+                <th v-if="productColumns.unit">Unit <span class="sher-bn header-bn">একক</span></th>
                 <SortableHeader
-                  v-if="canSeeCost"
+                  v-if="canSeeCost && productColumns.purchase"
                   column="purchasePrice"
                   label="Purchase"
                   label-bn="কেনা দর"
@@ -698,6 +747,7 @@ function stockPill(product: ProductResponse): string {
                   @sort="sortBy"
                 />
                 <SortableHeader
+                  v-if="productColumns.selling"
                   column="sellingPrice"
                   label="Selling"
                   label-bn="বিক্রয় দর"
@@ -706,27 +756,8 @@ function stockPill(product: ProductResponse): string {
                   :direction="direction"
                   @sort="sortBy"
                 />
-                <!--
-                  Not sortable — `stockQty` has no sort key in the contract —
-                  but drawn with the same label box as the columns that are, so
-                  the header row reads as one row.
-                -->
-                <th class="num">
-                  <span class="th-label">
-                    Stock
-                    <span class="sher-bn header-bn">স্টক</span>
-                  </span>
-                </th>
-                <!--
-                  Phase 18.3 (owner decision 2026-09-03) — column trimming.
-                  `Stock value` used to sit here. Nobody acts on one product's
-                  valuation from the product list: it is the Inventory Report's
-                  whole subject, where it is totalled, reconciled to the journal
-                  and provable (INV-05). Here it was a per-row number that
-                  narrowed every column beside it and answered nothing.
-                -->
-
                 <SortableHeader
+                  v-if="productColumns.status"
                   column="status"
                   label="Status"
                   label-bn="চালু আছে কি না"
@@ -743,22 +774,27 @@ function stockPill(product: ProductResponse): string {
                 :key="product.id"
                 :class="{ 'is-inactive': product.status === 'INACTIVE' }"
               >
+                <td v-if="productColumns.index" class="product-index">{{ (products.indexOf(product) + 1) }}.</td>
                 <td>
-                  <button type="button" class="linkish name" @click="openForm(product)">
-                    {{ product.displayName }}
-                  </button>
-                  <span v-if="product.offerLive" class="pill pill-info">Offer on</span>
-                  <small>{{ product.baseUnitName }}</small>
+                  <div class="product-name-cell">
+                    <span class="product-thumb" aria-hidden="true">
+                      <img v-if="product.hasImage" :src="`/api/v1/products/${product.id}/image`" alt="" loading="lazy" />
+                      <i v-else class="pi pi-box" />
+                    </span>
+                    <div class="product-identity">
+                      <button type="button" class="linkish name" @click="openForm(product)">{{ product.displayName }}</button>
+                      <span v-if="product.offerLive" class="pill pill-info">Offer on</span>
+                      <small>{{ product.sku ?? product.baseUnitName }}</small>
+                    </div>
+                  </div>
                 </td>
-                <td>
+                <td v-if="productColumns.category">
                   <span v-if="product.parentCategoryName !== null" class="muted">
                     {{ product.parentCategoryName }} ›
                   </span>
                   {{ product.categoryName ?? '—' }}
                 </td>
-                <td v-if="canSeeCost" class="num">{{ money(product.purchasePriceMinor) }}</td>
-                <td class="num">{{ money(product.sellingPriceMinor) }}</td>
-                <td class="num">
+                <td v-if="productColumns.stock" class="num product-stock">
                   {{ qtyText(product.stockQty) }}
                   <span
                     v-if="product.stockStatus !== 'IN_STOCK'"
@@ -779,10 +815,22 @@ function stockPill(product: ProductResponse): string {
                     {{ asOfText(storedAt) }}
                   </span>
                 </td>
-                <td>
-                  <span v-if="product.status === 'ACTIVE'" class="pill pill-ok">Active</span>
+                <td v-if="canSeeCost && productColumns.stockValue" class="num product-value">
+                  {{ money(product.stockValueMinor) }}
+                  <small>at purchase price</small>
+                </td>
+                <td v-if="productColumns.unit" class="product-unit">{{ product.baseUnitName }}
+                  <small v-if="product.conversion">Multi-unit</small>
+                </td>
+                <td v-if="canSeeCost && productColumns.purchase" class="num">{{ money(product.purchasePriceMinor) }}</td>
+                <td v-if="productColumns.selling" class="num product-selling">{{ money(product.sellingPriceMinor) }}<small>/{{ product.baseUnitName }}</small></td>
+                <td v-if="productColumns.status">
+                  <span v-if="product.status === 'ACTIVE'" class="pill" :class="stockPill(product)">
+                    {{ product.stockStatus === 'IN_STOCK' ? 'In stock' : product.stockStatus === 'LOW_STOCK' ? 'Low stock' : 'Out of stock' }}
+                  </span>
                   <span v-else class="pill pill-bad">Inactive</span>
                 </td>
+
                 <td class="actions">
                   <button
                     type="button"
@@ -1042,6 +1090,45 @@ td.actions {
   min-width: 44px;
   min-height: 44px;
 }
+
+/* HisabIQ product-list presentation: direct use of SherERP's authorized fields. */
+.product-overview { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.product-stat { display:flex; flex-direction:column; gap:3px; padding:13px 16px; min-width:0;
+  border:1px solid var(--sher-line); border-radius:12px; background:var(--sher-raised); }
+.product-stat > span { font-size:12px; color:var(--sher-text-muted); }
+.product-stat strong { font-size:18px; font-weight:600; color:var(--sher-text); font-variant-numeric:normal; }
+.product-stat small { font-size:11px; color:var(--sher-text-muted); }
+.product-stat strong.product-warning { color:var(--sher-warn-text); }
+.product-stat strong.product-danger { color:var(--sher-bad); }
+.product-column-picker { position:relative; align-self:end; z-index:4; }
+.product-column-picker > summary { list-style:none; display:flex; gap:8px; align-items:center; justify-content:center;
+  height:36px; padding:0 12px; font-size:12px; cursor:pointer; border:1px solid var(--sher-line);
+  border-radius:8px; background:var(--sher-raised); color:var(--sher-text); white-space:nowrap; }
+.product-column-picker > summary::-webkit-details-marker { display:none; }
+.product-column-menu { position:absolute; right:0; top:calc(100% + 5px); min-width:188px; max-height:360px; overflow:auto;
+  padding:8px; background:var(--sher-raised); border:1px solid var(--sher-line); border-radius:10px;
+  box-shadow:0 10px 22px rgb(15 23 42 / 13%); }
+.product-column-menu label { display:flex; gap:9px; align-items:center; padding:7px 9px; font-size:12px; cursor:pointer; }
+.product-column-menu label:hover { background:var(--sher-hover); }
+.hisabiq-products-table { width:100%; font-size:12.5px; }
+.hisabiq-products-table :is(th,td) { padding:9px 10px; vertical-align:middle; border-bottom:1px solid var(--sher-line); }
+.hisabiq-products-table th { white-space:nowrap; background:var(--sher-sunken); font-size:11px; font-weight:600; color:var(--sher-text-muted); }
+.hisabiq-products-table tbody tr:hover { background:var(--sher-hover); }
+.hisabiq-products-table .product-index { width:32px; color:var(--sher-text-muted); font-weight:400; text-align:left; }
+.product-name-cell { display:flex; align-items:center; gap:10px; min-width:150px; }
+.product-thumb { flex:none; width:34px; height:34px; display:grid; place-items:center; border-radius:7px;
+  border:1px solid var(--sher-line); background:var(--sher-sunken); color:var(--sher-text-muted); }
+.product-thumb img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+.product-identity { min-width:0; display:block; }
+.product-identity .name { display:inline; max-width:220px; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; text-align:left; font-size:12.5px; font-weight:600; }
+.product-identity small { font-size:10.5px; }
+.hisabiq-products-table .num { font-variant-numeric:normal; white-space:nowrap; }
+.product-value small, .product-selling small, .product-unit small { display:block; color:var(--sher-text-muted); font-weight:400; font-size:10px; }
+.product-stock { font-weight:600; }
+.product-selling { font-weight:600; }
+@media(max-width:1023px) { .product-overview {grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media(max-width:640px) { .product-overview {grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;} .product-stat {padding:10px;} }
 </style>
 
 <style>

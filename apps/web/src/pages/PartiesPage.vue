@@ -614,9 +614,9 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
 <template>
   <AppShell
-    :title="PAGE_COPY[role].title"
-    :breadcrumb="['Dashboard', PAGE_COPY[role].title]"
-    :help-bn="PAGE_COPY[role].helpBn"
+    :title="workspaceMode === 'WORKSPACE' ? 'Parties & Ledger' : PAGE_COPY[role].title"
+    :breadcrumb="['Dashboard', workspaceMode === 'WORKSPACE' ? 'Parties & Ledger' : PAGE_COPY[role].title]"
+    :help-bn="workspaceMode === 'WORKSPACE' ? 'পার্টি ও খাতা' : PAGE_COPY[role].helpBn"
     :class="{
       'party-workspace-view': workspaceMode === 'WORKSPACE',
       'party-detail-open': workspaceMode === 'WORKSPACE' && selectedPartyId !== null,
@@ -671,6 +671,21 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
     <!-- HisabIQ combined directory + context-ledger, using the real SherERP API. -->
     <section v-if="workspaceMode === 'WORKSPACE'" class="party-workspace" aria-label="People and ledgers">
+
+
+      <p v-if="notice" class="notice is-ok" role="status">{{ notice }}</p>
+      <ErrorNotice v-if="loadError" :code="loadError.code" :message="loadError.message" />
+
+      <div class="party-workspace-grid" :class="{ 'has-selection': selectedPartyId !== null }">
+        <section class="party-directory" aria-label="Party directory">
+          <form class="party-directory-toolbar" @submit.prevent="load">
+            <SearchField
+              v-model="search"
+              field-id="party-search"
+              label="Search people"
+              placeholder="Name or phone · নাম বা ফোন"
+              @search="load"
+            />
       <nav class="party-role-tabs" aria-label="Party role">
         <button
           v-for="choice in accessibleRoles"
@@ -689,20 +704,6 @@ async function removeGroup(id: string, name: string): Promise<void> {
           <i class="pi pi-list" aria-hidden="true" /> Table view
         </button>
       </nav>
-
-      <p v-if="notice" class="notice is-ok" role="status">{{ notice }}</p>
-      <ErrorNotice v-if="loadError" :code="loadError.code" :message="loadError.message" />
-
-      <div class="party-workspace-grid" :class="{ 'has-selection': selectedPartyId !== null }">
-        <section class="party-directory" aria-label="Party directory">
-          <form class="party-directory-toolbar" @submit.prevent="load">
-            <SearchField
-              v-model="search"
-              field-id="party-search"
-              label="Search people"
-              placeholder="Name or phone · নাম বা ফোন"
-              @search="load"
-            />
             <div class="party-directory-filters">
               <Select v-if="showsGroups" v-model="groupId" input-id="filter-group"
                 :options="groupOptions" option-label="name" option-value="id"
@@ -1676,6 +1677,43 @@ tbody tr.is-inactive td:not(.actions) {
   .party-role-tab { gap: 4px; }
   .party-role-tab .sher-bn { display: none; }
   .party-detail { padding: 0; }
+}
+
+/* Match HisabIQ's embedded role chips and three-column directory rows.
+   Pure presentation: role selection, party data, and ledger calls are unchanged. */
+.party-workspace-grid { grid-template-columns:minmax(330px,380px) minmax(0,1fr); gap:16px; }
+.party-directory { border-radius:12px; }
+.party-role-tabs { flex-wrap:wrap; overflow:visible; gap:4px; margin:0;
+  padding:0; border:0; }
+.party-role-tab { display:inline-flex; min-height:27px; gap:4px; align-items:center;
+  padding:5px 8px; border:0; border-radius:7px; background:var(--sher-sunken);
+  color:var(--sher-text-muted); font-size:11px; font-weight:500; }
+.party-role-tab .sher-bn { display:none; }
+.party-role-tab.is-active { background:var(--sher-primary); color:var(--sher-on-primary); }
+.party-role-tab.is-active:hover { color:var(--sher-on-primary); }
+.party-mode-switch { margin-left:auto; padding:4px 7px; font-size:11px; }
+.party-directory-person { position:relative; display:grid;
+  grid-template-columns:34px minmax(0,1fr) minmax(74px,auto); grid-template-rows:auto;
+  column-gap:9px; min-height:62px; padding:8px 12px; border-left:2px solid transparent;
+  border-bottom:1px solid var(--sher-line-soft); }
+.party-directory-person.is-selected { border-left-color:var(--sher-primary); background:color-mix(in srgb, var(--sher-primary-soft) 45%, var(--sher-raised)); }
+.party-directory-avatar { grid-column:1; grid-row:1; width:34px; height:34px; }
+.party-directory-identity { grid-column:2; grid-row:1; gap:3px; }
+.party-directory-identity strong { font-size:12.5px; font-weight:600; }
+.party-directory-meta { font-size:10.5px; }
+.party-directory-money { grid-column:3; grid-row:1; justify-self:end; font-size:12px;
+  font-variant-numeric:normal; }
+.party-directory-list { max-height:calc(100vh - 296px); min-height:320px; }
+.party-directory-summary { text-transform:uppercase; letter-spacing:.03em; font-size:10px; }
+.party-directory-toolbar { gap:8px; }
+@media (max-width:63.99rem) {
+  .party-workspace-grid {grid-template-columns:minmax(0,1fr);}
+  .party-directory-list {max-height:none; min-height:0;}
+}
+@media(max-width:40rem) {
+  .party-role-tabs { gap:4px; }
+  .party-role-tab {font-size:10.5px; padding-inline:7px;}
+  .party-directory-person { grid-template-columns:34px minmax(0,1fr) minmax(66px,auto); }
 }
 @media print {
   .party-directory, .party-role-tabs, .party-mobile-back, .party-list-switch { display: none !important; }
