@@ -1,4 +1,5 @@
 import {
+  averageUnitCostFrom,
   costIssue,
   rejectSale,
   salePosting,
@@ -1076,7 +1077,13 @@ export class CreateSaleService {
       costMinor: ownCostMinor + vendorCostMinor,
       source: ownedPositionIssue > 0 ? 'OWN_STOCK' : 'VENDOR_CONSIGNMENT',
       vendorPartyId: vendorIds.size === 1 ? ([...vendorIds][0] ?? null) : null,
-      vendorUnitCost: null,
+      // The legacy sale_lines_vendor_pair constraint requires an effective
+      // cost for a vendor-only line. Multiple vendor lots can have distinct
+      // agreed costs; the exact amounts remain in sourceAllocations, while the
+      // line stores their rounded weighted unit cost for compatibility.
+      vendorUnitCost: ownedPositionIssue === 0 && vendorRequested > 0
+        ? averageUnitCostFrom(vendorCostMinor, vendorRequested)
+        : null,
       isProvisionalCost: ownProvisional,
       movementId: Ulid.generate(this.clock),
       vendorLot: null,
