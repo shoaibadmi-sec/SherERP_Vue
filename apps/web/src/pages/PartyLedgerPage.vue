@@ -441,7 +441,7 @@ watch([partyId, role], () => {
           v-if="canBuy"
           type="button"
           class="btn btn-ghost"
-          @click="router.push('/purchases/new')"
+          @click="router.push({ path: '/purchases/new', query: { supplierPartyId: party.id } })"
         >
           <i class="pi pi-shopping-cart" aria-hidden="true" /> New purchase
         </button>
