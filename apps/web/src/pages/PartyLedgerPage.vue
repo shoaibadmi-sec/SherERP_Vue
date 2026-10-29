@@ -376,7 +376,7 @@ watch([partyId, role], () => {
           -->
           <component :is="embedded ? 'h2' : 'h1'">{{ ledger?.partyName ?? party?.name ?? 'Ledger' }}</component>
           <p v-if="party !== null" class="party-contact">
-            <span v-if="party.phone !== null" class="mono">{{ party.phone }}</span>
+            <span v-if="party.phone !== null">{{ party.phone }}</span>
             <span v-if="party.address !== null">{{ party.address }}</span>
           </p>
           <!--
@@ -427,7 +427,7 @@ watch([partyId, role], () => {
         <button
           v-if="canSell"
           type="button"
-          class="btn btn-primary"
+          class="btn btn-ghost"
           @click="router.push({ name: 'pos', query: { customer: party.id } })"
         >
           <i class="pi pi-shopping-cart" aria-hidden="true" /> New sale
@@ -486,6 +486,10 @@ watch([partyId, role], () => {
           {{ tab.label }} <span class="sher-bn">{{ tab.bn }}</span>
         </button>
       </nav>
+      <p v-if="activityTab !== 'ALL'" class="party-filter-note" role="note">
+        Showing {{ activityTab === 'INVOICES' ? 'invoice' : 'payment' }} entries from the loaded ledger.
+        Running balance still includes every transaction.
+      </p>
 
       <!--
         The shared picker, not a native `<input type="date">`: the native one
@@ -723,9 +727,10 @@ watch([partyId, role], () => {
   flex-wrap: wrap;
 }
 
-.ledger-head h1 {
+.ledger-head h1, .ledger-head h2 {
   margin: 0.25rem 0 0;
   font-size: 1.25rem;
+  overflow-wrap: anywhere;
 }
 
 .closing {
@@ -827,7 +832,7 @@ td.mono {
 
 /* HisabIQ underlined ledger tabs use the same posted journal. */
 .embedded-ledger { min-width: 0; }
-.embedded-ledger .ledger-head h1 { font-size: var(--sher-text-lg); font-weight: 600; }
+.embedded-ledger .ledger-head h2 { font-size: var(--sher-text-lg); font-weight: 600; }
 .embedded-ledger .hub-actions { gap: var(--sher-space-2); }
 .embedded-ledger .hub-actions .btn { min-height: var(--sher-control-h-sm); height: auto; font-size: var(--sher-text-sm); }
 .party-ledger-tabs {
@@ -846,11 +851,18 @@ td.mono {
   border-bottom-color: var(--sher-primary); color: var(--sher-primary-text); font-weight: 600;
 }
 .party-ledger-tab:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
+.party-filter-note {
+  margin: var(--sher-space-2) 0 0;
+  font-size: var(--sher-text-xs);
+  color: var(--sher-text-muted);
+}
+
 @media print { .party-ledger-tabs { display: none; } }
 
 .party-more-actions { display: inline-flex; flex-direction: column; position: relative; min-width: 6rem; }
 .party-more-actions summary {
   display: inline-flex; align-items: center; gap: 6px; list-style: none;
+  min-height: 36px;
   border: 1px solid var(--sher-line-strong); border-radius: var(--sher-radius);
   padding: 8px 12px; color: var(--sher-text-muted);
   cursor: pointer; font-size: var(--sher-text-sm);
