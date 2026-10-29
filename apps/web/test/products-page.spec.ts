@@ -175,27 +175,18 @@ describe('ProductsPage', () => {
     expect(headers.some((text) => text.startsWith('Reorder at'))).toBe(false);
   });
 
-  // §5.5: stock is a daily-use column and comes from the read model — the page
-  // must not sum or guess it. Its value belongs to the Inventory Report.
-  it('shows stock from the server’s own figures, and no longer values it here', async () => {
+  // Owner's HisabIQ-style Products table explicitly restores per-row stock
+  // value for cost-authorized users. Both numbers come directly from the read
+  // model; the Vue page must not multiply quantity by unit cost to invent them.
+  it('shows server-provided stock quantity and authorized stock value', async () => {
     const wrapper = await mountLoaded();
 
     const headers = wrapper.findAll('thead th').map((cell) => cell.text());
     expect(headers.some((text) => text.startsWith('Stock'))).toBe(true);
     expect(wrapper.text()).toContain('48');
 
-    /*
-     * Phase 18.3, owner decision 2026-09-03: `Stock value` came off this list.
-     * Nobody acts on one product's valuation from the product list — it is the
-     * Inventory Report's whole subject, where it is totalled and reconciled to
-     * the journal (INV-05) — and here it narrowed every column beside it.
-     *
-     * Asserted as absent rather than simply unasserted, so a later change that
-     * quietly puts a per-row valuation back has to argue with this test rather
-     * than slip past it.
-     */
-    expect(headers.some((text) => text.startsWith('Stock value'))).toBe(false);
-    expect(wrapper.text()).not.toContain('৳4,800.00');
+    expect(headers.some((text) => text.startsWith('Stock value'))).toBe(true);
+    expect(wrapper.text()).toContain('৳4,800.00');
   });
 
   it("shows the server's own code and message on failure (UI-28)", async () => {

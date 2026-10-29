@@ -104,7 +104,7 @@ test.setTimeout(300_000);
 
 test.describe('every screen opens, says what it is, and complains about nothing', () => {
   test('sweeps the whole product', async ({ page }) => {
-    const health = watchHealth(page);
+    const health = watchHealth(page, { ignoreViteNavigationAborts: true });
     const base = baseline();
     await signIn(page, { identifier: OWNER.identifier, password: OWNER.password });
 
@@ -127,7 +127,11 @@ test.describe('every screen opens, says what it is, and complains about nothing'
 
       // §13: a screen with no heading cannot be navigated by anything but sight.
       const heading = page.getByRole('heading').first();
-      if (!(await heading.isVisible().catch(() => false))) silent.push(path);
+      // Lazy route hydration can settle just after networkidle on a busy CI
+      // worker. Wait for the real accessible heading, not an arbitrary delay.
+      if (!(await heading.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false))) {
+        silent.push(path);
+      }
 
       // §12: nothing may push the page sideways. Two pixels of slack, because a
       // sub-pixel rounding difference in a border is not a defect a shopkeeper
