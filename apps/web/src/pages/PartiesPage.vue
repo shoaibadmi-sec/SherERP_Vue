@@ -1586,9 +1586,12 @@ tbody tr.is-inactive td:not(.actions) {
 .party-sort { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .party-directory-list { margin: 0; padding: 0; list-style: none; max-height: min(68vh, 780px); overflow-y: auto; }
 .party-directory-person {
-  display: grid; grid-template-columns: 32px minmax(0,1fr) auto;
-  align-items: center; gap: var(--sher-space-2);
-  width: 100%; min-height: 58px; padding: var(--sher-space-2) var(--sher-space-3);
+  /* Put the amount on its own aligned line: a long shop name and a large
+     balance must not fight for the same 340px directory row. */
+  display: grid; grid-template-columns: 32px minmax(0,1fr);
+  grid-template-rows: auto auto; align-items: center;
+  column-gap: var(--sher-space-2); row-gap: 2px;
+  width: 100%; min-height: 70px; padding: var(--sher-space-2) var(--sher-space-3);
   border: 0; border-bottom: 1px solid var(--sher-line-soft);
   background: transparent; color: var(--sher-text); text-align: left; font: inherit;
   cursor: pointer;
@@ -1596,6 +1599,7 @@ tbody tr.is-inactive td:not(.actions) {
 .party-directory-person:hover { background: var(--sher-hover); }
 .party-directory-person.is-selected { background: var(--sher-primary-soft); }
 .party-directory-avatar {
+  grid-row: 1 / span 2;
   display: grid; place-items: center; width: 32px; height: 32px;
   border-radius: var(--sher-radius-pill); background: var(--sher-surface-muted);
   color: var(--sher-text-muted); font-size: var(--sher-text-xs); font-weight: 600;
@@ -1603,14 +1607,20 @@ tbody tr.is-inactive td:not(.actions) {
 .party-directory-identity { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .party-directory-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sher-text-sm); font-weight: 600; }
 .party-directory-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sher-text-muted); font-size: var(--sher-text-xs); }
-.party-directory-money { text-align: right; font-size: var(--sher-text-xs); font-weight: 600; white-space: nowrap; }
+.party-directory-money {
+  grid-column: 2; grid-row: 2; justify-self: end; min-width: 0;
+  text-align: right; font-size: var(--sher-text-xs); font-weight: 600;
+  white-space: nowrap;
+}
 .party-directory-money.balance-settled { color: var(--sher-text-muted); }
 .party-workspace :deep(.num), .party-workspace :deep(.mono) {
   font-variant-numeric: normal;
   font-family: var(--sher-font);
 }
 .party-directory-more { padding: var(--sher-space-3); display: flex; justify-content: center; }
-.party-detail { padding: var(--sher-space-3); }
+/* The embedded AppCard already provides its own border and padding.
+   Avoid a visually heavy double-border around the real ledger. */
+.party-detail { padding: 0; border: 0; background: transparent; }
 .party-detail-empty {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; min-height: 320px; gap: var(--sher-space-2);
@@ -1631,7 +1641,8 @@ tbody tr.is-inactive td:not(.actions) {
   .party-mobile-back {
     display: inline-flex; align-items: center; gap: 6px;
     border: 0; background: transparent; color: var(--sher-primary-text);
-    padding: var(--sher-space-2); margin-bottom: var(--sher-space-2);
+    min-height: 44px; padding: var(--sher-space-2) var(--sher-space-3);
+    margin-bottom: var(--sher-space-2);
     font: inherit; font-size: var(--sher-text-sm); cursor: pointer;
   }
 }
@@ -1641,7 +1652,7 @@ tbody tr.is-inactive td:not(.actions) {
   .party-role-tabs { gap: var(--sher-space-3); }
   .party-role-tab { gap: 4px; }
   .party-role-tab .sher-bn { display: none; }
-  .party-detail { padding: var(--sher-space-2); }
+  .party-detail { padding: 0; }
 }
 @media print {
   .party-directory, .party-role-tabs, .party-mobile-back, .party-list-switch { display: none !important; }
