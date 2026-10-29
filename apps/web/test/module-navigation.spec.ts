@@ -72,7 +72,7 @@ describe('categorized module navigation', () => {
     expect(wrapper.text()).not.toContain('Audit Log');
   });
 
-  it('opens Customers under Parties without duplicate page navigation', async () => {
+  it('opens Customers under Customers & Suppliers without duplicate page navigation', async () => {
     grantAll();
     const router = await routerAt('/parties?role=CUSTOMER');
     const sidebar = mount(AppSidebar, {
@@ -82,7 +82,7 @@ describe('categorized module navigation', () => {
     const top = mount(ModuleFeatureNav, { global: { plugins: [router] } });
     await flushPromises();
 
-    expect(sidebar.text()).toContain('Parties');
+    expect(sidebar.text()).toContain('Customers & Suppliers');
     expect(sidebar.text()).toContain('Customers');
     expect(sidebar.text()).toContain('Suppliers');
     expect(top.find('.feature-nav').exists()).toBe(false);
@@ -150,7 +150,7 @@ describe('categorized module navigation', () => {
     expect(targets).toContain('/products');
     expect(targets).toContain('/settings/security');
 
-    const caption = wrapper.findAll('.nav-section').find((item) => item.text().includes('Parties'));
+    const caption = wrapper.findAll('.nav-section').find((item) => item.text().includes('Customers & Suppliers'));
     expect(caption?.element.tagName).toBe('P');
   });
 });
