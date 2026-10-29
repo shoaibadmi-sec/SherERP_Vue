@@ -171,14 +171,16 @@ describe('PartiesPage', () => {
     expect(load).toHaveBeenCalledWith('test-access', expect.objectContaining({ role: 'SUPPLIER' }));
   });
 
-  it('uses the page for customer and supplier rows instead of redundant summary cards', async () => {
+  it('opens HisabIQ party directory and keeps the original table available', async () => {
     const wrapper = await mountLoaded();
 
-    expect(wrapper.find('.tiles').exists()).toBe(false);
+    expect(wrapper.find('.party-workspace').exists()).toBe(true);
+    expect(wrapper.findAll('.party-directory-person')).toHaveLength(1);
+    expect(wrapper.find('.party-role-tabs').exists()).toBe(true);
+    expect(wrapper.find('.party-ledger-tabs').exists()).toBe(false);
+    await wrapper.find('.party-mode-switch').trigger('click');
     expect(wrapper.find('.table-wrap').exists()).toBe(true);
     expect(wrapper.find('.paging').text()).toContain('Showing 1 of 1');
-
-    expect(wrapper.find('.tabs').exists()).toBe(false);
   });
 
   /**
@@ -212,6 +214,7 @@ describe('PartiesPage', () => {
     setStatus.mockResolvedValue({ ...KARIM, status: 'INACTIVE' });
     const wrapper = await mountLoaded();
 
+    await wrapper.find('.party-mode-switch').trigger('click');
     await wrapper.find('.row-menu-trigger').trigger('click');
     await flushPromises();
     const deactivate = [...document.body.querySelectorAll<HTMLElement>('.p-menu-item')]
@@ -248,9 +251,13 @@ describe('PartiesPage', () => {
  * a feature nobody chose.
  */
 describe('PartiesPage with features off and rights missing', () => {
-  it('does not repeat Customer, Supplier or Vendor navigation inside the page', async () => {
+  it('offers only permitted relationship tabs', async () => {
     const wrapper = await mountLoaded();
-    expect(wrapper.find('.tabs').exists()).toBe(false);
+    const tabs = wrapper.findAll('.party-role-tab');
+    expect(tabs).toHaveLength(2);
+    expect(tabs.map((tab) => tab.text()).join(' ')).toContain('Customers');
+    expect(tabs.map((tab) => tab.text()).join(' ')).toContain('Suppliers');
+    expect(tabs.map((tab) => tab.text()).join(' ')).not.toContain('Vendors');
   });
 
   it('hides Add and the row actions from a caller who may only look', async () => {
