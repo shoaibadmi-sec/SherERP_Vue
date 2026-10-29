@@ -369,7 +369,7 @@ watch([partyId, role], () => {
             for them again. `partyName` comes from the ledger and `party` from
             the record, so the name is there from whichever answers first.
           -->
-          <h1>{{ ledger?.partyName ?? party?.name ?? 'Ledger' }}</h1>
+          <component :is="embedded ? 'h2' : 'h1'">{{ ledger?.partyName ?? party?.name ?? 'Ledger' }}</component>
           <p v-if="party !== null" class="party-contact">
             <span v-if="party.phone !== null" class="mono">{{ party.phone }}</span>
             <span v-if="party.address !== null">{{ party.address }}</span>
@@ -446,6 +446,9 @@ watch([partyId, role], () => {
           <i class="pi pi-shopping-cart" aria-hidden="true" /> New purchase
         </button>
 
+        <details class="party-more-actions">
+          <summary><i class="pi pi-ellipsis-h" aria-hidden="true" /> More <span class="sher-bn">আরও</span></summary>
+          <div class="party-more-panel">
         <button
           v-if="canEdit && !party.isSystemReserved"
           type="button"
@@ -466,6 +469,8 @@ watch([partyId, role], () => {
         <button type="button" class="btn btn-ghost" @click="printStatement">
           <i class="pi pi-print" aria-hidden="true" /> Print statement
         </button>
+          </div>
+        </details>
       </div>
 
       <ErrorNotice v-if="failure !== null" :code="failure.code" :message="failure.message" />
@@ -837,4 +842,19 @@ td.mono {
 }
 .party-ledger-tab:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
 @media print { .party-ledger-tabs { display: none; } }
+
+.party-more-actions { display: inline-flex; flex-direction: column; position: relative; min-width: 6rem; }
+.party-more-actions summary {
+  display: inline-flex; align-items: center; gap: 6px; list-style: none;
+  border: 1px solid var(--sher-line-strong); border-radius: var(--sher-radius);
+  padding: 8px 12px; color: var(--sher-text-muted);
+  cursor: pointer; font-size: var(--sher-text-sm);
+}
+.party-more-actions summary::-webkit-details-marker { display: none; }
+.party-more-actions summary:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: 2px; }
+.party-more-panel {
+  display: flex; flex-wrap: wrap; gap: var(--sher-space-2);
+  padding-top: var(--sher-space-2);
+}
+.embedded-ledger .party-more-actions { width: 100%; }
 </style>
