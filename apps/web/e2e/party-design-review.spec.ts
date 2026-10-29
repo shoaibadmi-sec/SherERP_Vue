@@ -86,6 +86,8 @@ test('tablet Party directory and detail fit without clipped actions', async ({ p
 
   await directory.getByRole('button', { name: /E2E Customer/i }).first().click();
   await expect(directory).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Customers', exact: true })).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Party role' })).toBeHidden();
   await expect(page.getByRole('navigation', { name: 'Party ledger sections' })).toBeVisible();
   await noHorizontalPageOverflow(page);
 
