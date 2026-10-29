@@ -156,6 +156,8 @@ describe('PartiesPage', () => {
   });
 
   it("shows the server's own code and message on failure (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     load.mockRejectedValue(new ApiError('PERMISSION_DENIED', 'Permission required', 403));
 
     const wrapper = await mountLoaded();
@@ -163,6 +165,15 @@ describe('PartiesPage', () => {
     expect(wrapper.text()).toContain('PERMISSION_DENIED');
     expect(wrapper.text()).toContain('Permission required');
     expect(wrapper.text()).not.toContain('Something went wrong');
+  });
+
+  it('shows a readable refusal without leaking the technical reference to ordinary staff', async () => {
+    load.mockRejectedValue(new ApiError('PERMISSION_DENIED', 'Permission required', 403));
+    const wrapper = await mountLoaded();
+
+    expect(wrapper.text()).toContain('Permission required');
+    expect(wrapper.text()).not.toContain('PERMISSION_DENIED');
+    expect(wrapper.find('.technical-details').exists()).toBe(false);
   });
 
   it('uses the independent sidebar route as the supplier list context', async () => {
