@@ -1291,7 +1291,7 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
 /* Outstanding is the one that needs attention, so it is the loud one. */
 .balance-receivable {
-  color: var(--sher-party-teal-text);
+  color: var(--sher-ok);
 }
 .balance-payable {
   color: var(--sher-bad);
@@ -1529,22 +1529,9 @@ tbody tr.is-inactive td:not(.actions) {
   flex: 1;
 }
 
-/* HisabIQ accent starts at the module header, not only below its tabs.
-   The global SherERP sidebar remains unchanged. */
-.party-workspace-view {
-  --sher-primary: var(--sher-party-teal);
-  --sher-primary-strong: var(--sher-party-teal-strong);
-  --sher-primary-soft: var(--sher-party-teal-soft);
-  --sher-primary-text: var(--sher-party-teal-text);
-  --sher-on-primary: var(--sher-party-on-teal);
-}
-/* Combined HisabIQ Party workspace: restrained typography, compact real ledgers. */
+/* HisabIQ Party layout with the original ERP blue brand controls.
+   Receivable/payable semantic colors remain distinct from the brand. */
 .party-workspace {
-  --sher-primary: var(--sher-party-teal);
-  --sher-primary-strong: var(--sher-party-teal-strong);
-  --sher-primary-soft: var(--sher-party-teal-soft);
-  --sher-primary-text: var(--sher-party-teal-text);
-  --sher-on-primary: var(--sher-party-on-teal);
   --sher-control-h: 36px;
   min-width: 0;
 }

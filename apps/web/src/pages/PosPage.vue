@@ -2820,13 +2820,8 @@ onBeforeUnmount(() => {
   margin: 8px auto 0;
 }
 
-/* HisabIQ POS V2: preserve the original Vue sale handlers and API contracts. */
+/* Original ERP blue accent; HisabIQ-inspired Vue layout retains existing sale APIs. */
 .pos {
-  --sher-primary: var(--sher-pos-teal);
-  --sher-primary-strong: var(--sher-pos-teal-strong);
-  --sher-primary-text: var(--sher-pos-teal-text);
-  --sher-primary-soft: var(--sher-pos-teal-soft);
-  --sher-on-primary: var(--sher-pos-on-teal);
   --sher-control-h: 36px;
   gap: var(--sher-space-2);
 }
@@ -2959,7 +2954,7 @@ onBeforeUnmount(() => {
 .cart__invoice-customer-details summary small {font-size:10px; font-weight:400; color:var(--sher-text-muted);}
 .cart__customer-fields {display:flex; flex-direction:column; gap:9px; padding:10px; }
 .cart__invoice-customer-details :is(input,button):focus-visible,
-.cart__invoice-customer-details > summary:focus-visible {outline:2px solid var(--sher-pos-teal);outline-offset:2px;}
+.cart__invoice-customer-details > summary:focus-visible {outline:2px solid var(--sher-primary);outline-offset:2px;}
 /* HisabIQ layout parity: actual editable cart above standalone quick item cards. */
 .pos__left { display:flex; flex-direction:column; gap:16px; min-width:0; }
 .cart__editing { min-width:0; }
@@ -3098,7 +3093,7 @@ onBeforeUnmount(() => {
 .catalogue .tile__foot { gap: 4px; flex-wrap: wrap; }
 .catalogue .tile__price { font-size: 11px; font-weight: 600; }
 .catalogue .stock { font-size: 10px; }
-.tile__add { margin-left: auto; color: var(--sher-pos-teal-text); font-size: 13px; }
+.tile__add { margin-left: auto; color: var(--sher-primary-text); font-size: 13px; }
 .cart__line-name { align-items: flex-start; }
 .cart__line-title { font-size: 12.5px; }
 /* HisabIQ typography: standard proportional numerals, never tabular/monospaced. */
@@ -3109,18 +3104,18 @@ onBeforeUnmount(() => {
 .pos .stock { font-variant-numeric: normal; }
 .totals__row--grand {
   padding: 10px 11px;
-  border: 1px solid var(--sher-pos-teal);
+  border: 1px solid var(--sher-primary);
   border-radius: 10px 10px 0 0;
-  background: var(--sher-pos-teal-soft);
+  background: var(--sher-primary-soft);
 }
-.totals__row--grand .num { font-size: 20px; color: var(--sher-pos-teal-text); }
+.totals__row--grand .num { font-size: 20px; color: var(--sher-primary-text); }
 .totals__words {
   margin: -6px 0 0;
   padding: 10px 11px;
-  border: 1px solid var(--sher-pos-teal);
+  border: 1px solid var(--sher-primary);
   border-top: 0;
   border-radius: 0 0 10px 10px;
-  background: var(--sher-pos-teal-soft);
+  background: var(--sher-primary-soft);
 }
 @media (max-width: 68rem) {
   .cart { grid-template-columns: minmax(0, 1fr); }

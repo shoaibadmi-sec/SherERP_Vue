@@ -844,7 +844,7 @@ tfoot tr {
 }
 
 .balance-receivable {
-  color: var(--sher-party-teal-text);
+  color: var(--sher-ok);
 }
 
 .balance-payable {
