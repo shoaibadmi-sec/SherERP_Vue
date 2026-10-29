@@ -40,6 +40,8 @@ test('Party directory remains simple and navigable on a phone', async ({ page },
   const back = page.getByRole('button', { name: /All people/i });
   await expect(back).toBeVisible();
   await expect(directory).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Customers', exact: true })).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Party role' })).toBeHidden();
   await expect(page.getByRole('navigation', { name: 'Party ledger sections' })).toBeVisible();
   await noPageOverflow(page);
   await phoneScreenshot(page, testInfo, 'mobile-customer-ledger');
