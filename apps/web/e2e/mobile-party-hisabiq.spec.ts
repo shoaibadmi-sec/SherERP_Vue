@@ -6,8 +6,9 @@
  */
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import { MANAGER } from './support/seed';
-import { signIn } from './support/ui';
+import { MANAGER, tokenFor } from './support/seed';
+import { call } from './support/api';
+import { baseline, signIn, today } from './support/ui';
 
 async function noPageOverflow(page: Page): Promise<void> {
   const overflow = await page.evaluate(
@@ -27,6 +28,11 @@ async function phoneScreenshot(page: Page, testInfo: TestInfo, label: string): P
 }
 
 test('Party directory remains simple and navigable on a phone', async ({ page }, testInfo: TestInfo) => {
+  const token = await tokenFor(MANAGER);
+  await call(`/api/v1/parties/${baseline().customerId}/opening`, {
+    method: 'POST', token, idempotent: true,
+    body: { role: 'CUSTOMER', direction: 'RECEIVABLE', amountMinor: 987_654_321, businessDate: today() },
+  });
   await signIn(page, MANAGER);
   await page.goto('/parties?role=CUSTOMER');
   await page.waitForLoadState('networkidle');
