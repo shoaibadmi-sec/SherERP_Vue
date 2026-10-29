@@ -152,12 +152,9 @@ function balanceText(balance: PartyLedgerResponse['openingBalance']): string {
  */
 function balanceClass(direction: string): string {
   if (direction === 'SETTLED') return 'balance-settled';
-  // A multi-role party has one shared journal, so label and color its net direction.
-  if ((party.value?.roles.length ?? 0) > 1) return direction === 'RECEIVABLE'
-    ? 'balance-advance' : 'balance-due';
-  const outstanding =
-    role.value === 'CUSTOMER' ? direction === 'RECEIVABLE' : direction === 'PAYABLE';
-  return outstanding ? 'balance-due' : 'balance-advance';
+  // The amount is already netted by the server. Follow the HisabIQ convention:
+  // green/teal means the shop will receive; red means the shop will pay.
+  return direction === 'RECEIVABLE' ? 'balance-receivable' : 'balance-payable';
 }
 
 /**
@@ -786,12 +783,12 @@ tfoot tr {
   background: var(--sher-subtle-bg, rgb(0 0 0 / 3%));
 }
 
-.balance-due {
-  color: var(--sher-bad-fg, #b91c1c);
+.balance-receivable {
+  color: var(--sher-party-teal-text);
 }
 
-.balance-advance {
-  color: var(--sher-ok-fg, #15803d);
+.balance-payable {
+  color: var(--sher-bad);
 }
 
 .balance-settled {
