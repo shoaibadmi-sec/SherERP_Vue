@@ -1,5 +1,6 @@
 # One-time seed of the six existing visual.spec.ts screenshot references.
 # The screenshots were visually reviewed from the isolated CI browser artifacts.
+# Refresh once to include the live business-date masking in visual.spec.ts.
 # Deliberately limited to this draft branch and to changes to this file only.
 name: Seed reviewed visual baselines
 
