@@ -2138,7 +2138,7 @@
       "fields": [
         {
           "id": "search",
-          "label": "Search …s",
+          "label": "Search people",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",
@@ -2205,6 +2205,34 @@
         {
           "label": "Add",
           "role": "PRIMARY"
+        },
+        {
+          "label": "Table view",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Clear filters",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Balance",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "No phone 1\" class=\"party-role-count\"> · roles",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Show more people",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "All people",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Party workspace",
+          "role": "SECONDARY"
         },
         {
           "label": "Clear",
@@ -8928,7 +8956,7 @@
       "fields": [
         {
           "id": "query",
-          "label": "Search products, parties and documents",
+          "label": "Search products, customers, suppliers and documents",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",
