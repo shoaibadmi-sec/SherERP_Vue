@@ -1,4 +1,5 @@
-import { addDays, SystemClock } from '@sher/shared-utils';
+import sharedUtils from '@sher/shared-utils';
+const { addDays, SystemClock } = sharedUtils;
 
 import { call, login, operationKey } from './api';
 
