@@ -39,13 +39,19 @@ jobs:
         run: pnpm --filter "@sher/api..." build
       - name: Install Chromium and browser dependencies
         run: pnpm --filter @sher/web exec playwright install --with-deps chromium
-      - name: Check unified Party desktop and mobile workflows
-        run: pnpm --filter @sher/web exec playwright test party-hisabiq-workspace.spec.ts mobile-party-hisabiq.spec.ts
+      # Do not let the mobile project's desktop dependency pull every unrelated
+      # E2E spec into this focused design review. Those visual specs currently
+      # have no committed Linux baselines.
+      - name: Verify desktop and tablet Party workflows and capture screenshots
+        run: pnpm --filter @sher/web exec playwright test party-hisabiq-workspace.spec.ts party-design-review.spec.ts --project=desktop --no-deps
+      - name: Verify real touch/mobile Party workflow and capture screenshots
+        run: pnpm --filter @sher/web exec playwright test mobile-party-hisabiq.spec.ts --project=mobile --no-deps
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: party-workspace-playwright
+          name: party-workspace-screenshots
           path: |
             apps/web/playwright-report
             apps/web/test-results
-          retention-days: 7
+          retention-days: 14
+          if-no-files-found: warn
