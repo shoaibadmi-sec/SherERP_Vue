@@ -1,4 +1,5 @@
 import {
+  averageUnitCostFrom,
   costIssue,
   rejectSale,
   salePosting,
@@ -28,7 +29,7 @@ import type { PeriodGuard } from '../ports/period-guard';
 import type { TenantContext } from '../ports/tenant-context';
 import type { Tx, UnitOfWork } from '../ports/unit-of-work';
 import { resolvePaymentAccount } from '../purchasing/payment-account';
-import { effectiveSettings, settingValuesOf } from '../settings/feature-dependencies';
+import { effectiveSettings, isFeatureOn, settingValuesOf } from '../settings/feature-dependencies';
 import type { SettingsRepository } from '../settings/settings-repository';
 import type {
   VendorReceiptRow,
@@ -279,7 +280,7 @@ export class CreateSaleService {
       const values = effectiveSettings(settingValuesOf(await this.settings.listStored(tx, ctx)));
       const method = values.get(SettingKey.SALE_COSTING_METHOD) === 'AVERAGE' ? 'AVERAGE' : 'FIFO';
       const negativePolicy = String(values.get(SettingKey.NEGATIVE_STOCK_POLICY) ?? 'WARN');
-      const consignmentOn = values.get(SettingKey.VENDOR_CONSIGNMENT_ENABLED) === 'ON';
+      const consignmentOn = isFeatureOn(values, SettingKey.VENDOR_CONSIGNMENT_ENABLED);
       /*
        * §5.13, owner decision 2026-08-26. Under BLOCK an expired batch stops
        * being sellable stock: the picker passes over it, so a customer gets
@@ -1056,7 +1057,11 @@ export class CreateSaleService {
      * quantity does. That is what makes AVERAGE stable across a day of selling.
      */
     const ownedPositionIssue = ownedRequested + negativeRequested;
-    const qtyOnHand = Qty(position.qtyOnHand).subtract(Qty(ownedPositionIssue)).raw;
+    // The physical stock cache includes vendor-held units. Selling consignment
+    // reduces that physical quantity too, even though it never releases value
+    // from the shop's owned INVENTORY account (DR13.10, INV-02/04).
+    const physicalPositionIssue = ownedPositionIssue + vendorRequested;
+    const qtyOnHand = Qty(position.qtyOnHand).subtract(Qty(physicalPositionIssue)).raw;
 
     return {
       id: Ulid.generate(this.clock),
@@ -1072,7 +1077,13 @@ export class CreateSaleService {
       costMinor: ownCostMinor + vendorCostMinor,
       source: ownedPositionIssue > 0 ? 'OWN_STOCK' : 'VENDOR_CONSIGNMENT',
       vendorPartyId: vendorIds.size === 1 ? ([...vendorIds][0] ?? null) : null,
-      vendorUnitCost: null,
+      // The legacy sale_lines_vendor_pair constraint requires an effective
+      // cost for a vendor-only line. Multiple vendor lots can have distinct
+      // agreed costs; the exact amounts remain in sourceAllocations, while the
+      // line stores their rounded weighted unit cost for compatibility.
+      vendorUnitCost: ownedPositionIssue === 0 && vendorRequested > 0
+        ? averageUnitCostFrom(vendorCostMinor, vendorRequested)
+        : null,
       isProvisionalCost: ownProvisional,
       movementId: Ulid.generate(this.clock),
       vendorLot: null,
@@ -1084,7 +1095,7 @@ export class CreateSaleService {
         exists: position.exists,
         avgUnitCost: position.avgUnitCost,
         qtyOnHand,
-        qtyChange: ownedPositionIssue,
+        qtyChange: physicalPositionIssue,
       },
     };
   }

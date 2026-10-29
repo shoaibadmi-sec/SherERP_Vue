@@ -2,8 +2,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-import type { Page } from '@playwright/test';
-import { SystemClock } from '@sher/shared-utils';
+import { expect, type Page } from '@playwright/test';
+import { createRequire } from 'node:module';
+import type * as SherSharedUtils from '@sher/shared-utils';
+const requireShared = createRequire(import.meta.url);
+const { SystemClock } = requireShared('@sher/shared-utils') as typeof SherSharedUtils;
 
 import type { Baseline } from './seed';
 
@@ -68,9 +71,14 @@ export async function signIn(
   await page.goto('/login');
 
   const usePassword = page.getByRole('button', { name: /use password/i });
-  if (await usePassword.isVisible().catch(() => false)) await usePassword.click();
+  const identifier = page.getByLabel(/mobile number or email/i);
+  // Vue can render the saved-device PIN login *after* goto resolves. An
+  // immediate isVisible() races that hydration, skips "Use password instead",
+  // and then waits 90 seconds for a field that is correctly absent.
+  await expect(identifier.or(usePassword)).toBeVisible();
+  if (await usePassword.isVisible()) await usePassword.click();
 
-  await page.getByLabel(/mobile number or email/i).fill(person.identifier);
+  await identifier.fill(person.identifier);
   await page.getByLabel(/^password$/i).fill(person.password);
   await page.getByRole('button', { name: /^sign in$/i }).click();
 

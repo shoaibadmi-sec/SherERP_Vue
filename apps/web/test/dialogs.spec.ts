@@ -413,6 +413,8 @@ describe('StockAdjustDialog', () => {
   });
 
   it("shows the server's own code and message when the adjustment is refused (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     adjustStock.mockRejectedValue(new ApiError('PERIOD_LOCKED', 'That month is closed', 409));
     await open();
     await type(fieldByLabel('Add or remove'), '10');
@@ -960,6 +962,8 @@ describe('PaySupplierDialog', () => {
   });
 
   it("shows the server's own refusal (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     paySupplier.mockRejectedValue(new ApiError('PERIOD_LOCKED', 'That month is closed', 409));
     await open();
 

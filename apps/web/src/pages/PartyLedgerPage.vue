@@ -33,14 +33,20 @@ import PartyFormPage from './PartyFormPage.vue';
  * means reversing and reposting the document that produced it (§2.5), which
  * happens on that document's own screen.
  */
+const props = withDefaults(defineProps<{
+  embedded?: boolean;
+  embeddedPartyId?: string | null;
+  embeddedRole?: PartyRoleValue;
+}>(), { embedded: false, embeddedPartyId: null, embeddedRole: 'CUSTOMER' });
+const emit = defineEmits<{ back: []; updated: [] }>();
 const route = useRoute();
 const router = useRouter();
 const session = useSession();
-
-const partyId = computed(() => String(route.params.id ?? ''));
+const partyId = computed(() => props.embedded ? (props.embeddedPartyId ?? '') : String(route.params.id ?? ''));
 
 /** Which list to go back to. A party may hold several roles (D-04). */
 const role = computed<PartyRoleValue>(() => {
+  if (props.embedded) return props.embeddedRole;
   const value = route.query.role;
   return value === 'SUPPLIER' || value === 'VENDOR' ? value : 'CUSTOMER';
 });
@@ -75,6 +81,22 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200].map((value) => ({ label: String(value),
 const pageSize = ref<number>(50);
 
 const rows = computed(() => ledger.value?.rows ?? []);
+type ActivityTab = 'ALL' | 'INVOICES' | 'PAYMENTS';
+const activityTab = ref<ActivityTab>('ALL');
+const activityTabs: ReadonlyArray<{ id: ActivityTab; label: string; bn: string }> = [
+  { id: 'ALL', label: 'Ledger', bn: 'খাতা' },
+  { id: 'INVOICES', label: 'Invoices', bn: 'বিল' },
+  { id: 'PAYMENTS', label: 'Payments', bn: 'টাকা' },
+];
+const visibleRows = computed(() => {
+  if (activityTab.value === 'ALL') return rows.value;
+  if (activityTab.value === 'INVOICES') return rows.value.filter((row) =>
+    ['SALE', 'SALE_RETURN', 'PURCHASE', 'PURCHASE_RETURN'].includes(row.sourceDocumentType));
+  // Journal source types are module-qualified (e.g. CUSTOMER_RECEIPT and
+  // SUPPLIER_PAYMENT), not just bare PAYMENT/RECEIPT.
+  return rows.value.filter((row) =>
+    /(?:PAYMENT|RECEIPT|SETTLEMENT)/.test(row.sourceDocumentType));
+});
 
 async function load(cursor: string | null = null): Promise<void> {
   const token = session.accessToken.value;
@@ -118,6 +140,16 @@ function money(minor: number): string {
   return `৳${Money(minor).format()}`;
 }
 
+/** A running figure must say who owes whom, never only the absolute amount. */
+function runningBalanceText(minor: number): string {
+  if (minor === 0) return 'Settled';
+  return `${money(Math.abs(minor))} ${minor > 0 ? 'পাবো' : 'দিব'}`;
+}
+
+function runningBalanceClass(minor: number): string {
+  return minor === 0 ? 'balance-settled' : balanceClass(minor > 0 ? 'RECEIVABLE' : 'PAYABLE');
+}
+
 /** §2.4's display mapping, the same one the parties list applies. */
 function balanceText(balance: PartyLedgerResponse['openingBalance']): string {
   if (balance.direction === 'SETTLED') return 'Settled';
@@ -133,9 +165,9 @@ function balanceText(balance: PartyLedgerResponse['openingBalance']): string {
  */
 function balanceClass(direction: string): string {
   if (direction === 'SETTLED') return 'balance-settled';
-  const outstanding =
-    role.value === 'CUSTOMER' ? direction === 'RECEIVABLE' : direction === 'PAYABLE';
-  return outstanding ? 'balance-due' : 'balance-advance';
+  // The amount is already netted by the server. Follow the HisabIQ convention:
+  // green/teal means the shop will receive; red means the shop will pay.
+  return direction === 'RECEIVABLE' ? 'balance-receivable' : 'balance-payable';
 }
 
 /**
@@ -155,6 +187,9 @@ const DOCUMENT_LABELS: Record<string, string> = {
   PURCHASE_RETURN: 'Purchase return',
   PAYMENT: 'Payment',
   RECEIPT: 'Receipt',
+  CUSTOMER_RECEIPT: 'Customer receipt',
+  SUPPLIER_PAYMENT: 'Supplier payment',
+  VENDOR_PAYMENT: 'Vendor payment',
 };
 
 function documentLabel(type: string): string {
@@ -162,7 +197,8 @@ function documentLabel(type: string): string {
 }
 
 function goBack(): void {
-  void router.push(`/parties?role=${role.value}`);
+  if (props.embedded) emit('back');
+  else void router.push(`/parties?role=${role.value}`);
 }
 
 /* ------------------------------------------------------------- the hub bits */
@@ -182,8 +218,10 @@ const RIGHTS: Record<PartyRoleValue, string> = {
 const canEdit = computed(() => session.can(RIGHTS[role.value]));
 
 /** §5.6: the same figure, named for the role reading it. */
-const closingLabel = computed(() => (role.value === 'CUSTOMER' ? 'Current Due' : 'Payable'));
-const closingLabelBn = computed(() => (role.value === 'CUSTOMER' ? 'পাবো' : 'দিব'));
+const closingLabel = computed(() => (party.value?.roles.length ?? 0) > 1
+  ? 'Net balance' : role.value === 'CUSTOMER' ? 'Current Due' : 'Payable');
+const closingLabelBn = computed(() => (party.value?.roles.length ?? 0) > 1
+  ? 'মোট জের' : role.value === 'CUSTOMER' ? 'পাবো' : 'দিব');
 
 /** The closing balance split into its word and its amount, for the totals row. */
 const closingWord = computed(() => {
@@ -251,6 +289,7 @@ async function onPaymentReceived(): Promise<void> {
   // The balance above and the statement below are two readings of the lines
   // this receipt just wrote, so both are re-read — as the supplier path does.
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function onSupplierPaid(): Promise<void> {
@@ -258,6 +297,7 @@ async function onSupplierPaid(): Promise<void> {
   // The balance above and the statement below both move — they are two readings
   // of the lines this payment just wrote.
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function loadParty(): Promise<void> {
@@ -275,11 +315,13 @@ async function loadParty(): Promise<void> {
 async function onEdited(): Promise<void> {
   editing.value = false;
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 async function onOpeningSaved(): Promise<void> {
   openingOpen.value = false;
   await Promise.all([loadParty(), load()]);
+  emit('updated');
 }
 
 /**
@@ -305,19 +347,26 @@ onDataChanged(() => {
 });
 
 // A new party id means a different ledger, not another page of this one.
-watch(partyId, () => {
+watch([partyId, role], () => {
   ledger.value = null;
   party.value = null;
+  activityTab.value = 'ALL';
+  fromDate.value = '';
+  toDate.value = '';
   void load();
   void loadParty();
 });
 </script>
 
 <template>
-  <AppShell
-    title="Ledger"
-    :breadcrumb="['Dashboard', roleLabel, ledger?.partyName ?? 'Ledger']"
-    help-bn="এই পক্ষের সব লেনদেন আর বকেয়ার হিসাব"
+  <component
+    :is="embedded ? 'section' : AppShell"
+    v-bind="embedded ? {} : {
+      title: 'Ledger',
+      breadcrumb: ['Dashboard', roleLabel, ledger?.partyName ?? 'Ledger'],
+      helpBn: 'এই পক্ষের সব লেনদেন আর বকেয়ার হিসাব',
+    }"
+    :class="{ 'embedded-ledger': embedded }"
   >
     <AppCard>
       <!--
@@ -331,16 +380,16 @@ watch(partyId, () => {
       -->
       <div class="ledger-head">
         <div>
-          <button type="button" class="linkish no-print" @click="goBack">← Back to list</button>
+          <button v-if="!embedded" type="button" class="linkish no-print" @click="goBack">← Back to list</button>
           <!--
             §5.6's hub: the party's own details sit above their statement, so
             the operator can act on this person without leaving and searching
             for them again. `partyName` comes from the ledger and `party` from
             the record, so the name is there from whichever answers first.
           -->
-          <h1>{{ ledger?.partyName ?? party?.name ?? 'Ledger' }}</h1>
+          <component :is="embedded ? 'h2' : 'h1'">{{ ledger?.partyName ?? party?.name ?? 'Ledger' }}</component>
           <p v-if="party !== null" class="party-contact">
-            <span v-if="party.phone !== null" class="mono">{{ party.phone }}</span>
+            <span v-if="party.phone !== null">{{ party.phone }}</span>
             <span v-if="party.address !== null">{{ party.address }}</span>
           </p>
           <!--
@@ -391,7 +440,7 @@ watch(partyId, () => {
         <button
           v-if="canSell"
           type="button"
-          class="btn btn-primary"
+          class="btn btn-ghost"
           @click="router.push({ name: 'pos', query: { customer: party.id } })"
         >
           <i class="pi pi-shopping-cart" aria-hidden="true" /> New sale
@@ -410,11 +459,14 @@ watch(partyId, () => {
           v-if="canBuy"
           type="button"
           class="btn btn-ghost"
-          @click="router.push('/purchases/new')"
+          @click="router.push({ path: '/purchases/new', query: { supplierPartyId: party.id } })"
         >
           <i class="pi pi-shopping-cart" aria-hidden="true" /> New purchase
         </button>
 
+        <details class="party-more-actions">
+          <summary><i class="pi pi-ellipsis-h" aria-hidden="true" /> More <span class="sher-bn">আরও</span></summary>
+          <div class="party-more-panel">
         <button
           v-if="canEdit && !party.isSystemReserved"
           type="button"
@@ -435,9 +487,22 @@ watch(partyId, () => {
         <button type="button" class="btn btn-ghost" @click="printStatement">
           <i class="pi pi-print" aria-hidden="true" /> Print statement
         </button>
+          </div>
+        </details>
       </div>
 
       <ErrorNotice v-if="failure !== null" :code="failure.code" :message="failure.message" />
+      <nav class="party-ledger-tabs no-print" aria-label="Party ledger sections">
+        <button v-for="tab in activityTabs" :key="tab.id" type="button"
+          class="party-ledger-tab" :class="{ 'is-active': activityTab === tab.id }"
+          :aria-current="activityTab === tab.id ? 'page' : 'false'" @click="activityTab = tab.id">
+          {{ tab.label }} <span class="sher-bn">{{ tab.bn }}</span>
+        </button>
+      </nav>
+      <p v-if="activityTab !== 'ALL'" class="party-filter-note" role="note">
+        Showing {{ activityTab === 'INVOICES' ? 'invoice' : 'payment' }} entries from the loaded ledger.
+        Totals and running balances still include every transaction.
+      </p>
 
       <!--
         The shared picker, not a native `<input type="date">`: the native one
@@ -485,9 +550,9 @@ watch(partyId, () => {
       </div>
 
       <EmptyState
-        v-if="!busy && rows.length === 0"
+        v-if="!busy && visibleRows.length === 0"
         icon="pi-book"
-        title="Nothing posted in this period"
+        :title="activityTab === 'ALL' ? 'Nothing posted in this period' : 'No matching entries in this period'"
       />
 
       <template v-else>
@@ -517,13 +582,15 @@ watch(partyId, () => {
                 </td>
               </tr>
 
-              <tr v-for="row in rows" :key="row.journalLineId">
+              <tr v-for="row in visibleRows" :key="row.journalLineId">
                 <td>{{ row.businessDate }}</td>
                 <td>{{ documentLabel(row.sourceDocumentType) }}</td>
                 <td class="mono">{{ row.sourceNumber }}</td>
                 <td class="num">{{ row.debitMinor === 0 ? '—' : money(row.debitMinor) }}</td>
                 <td class="num">{{ row.creditMinor === 0 ? '—' : money(row.creditMinor) }}</td>
-                <td class="num">{{ money(Math.abs(row.runningBalanceMinor)) }}</td>
+                <td class="num" :class="runningBalanceClass(row.runningBalanceMinor)">
+                  {{ runningBalanceText(row.runningBalanceMinor) }}
+                </td>
               </tr>
             </tbody>
             <!--
@@ -534,7 +601,7 @@ watch(partyId, () => {
             -->
             <tfoot v-if="ledger !== null">
               <tr>
-                <td colspan="3" class="totals-label">Total for this period</td>
+                <td colspan="3" class="totals-label">{{ activityTab === 'ALL' ? 'Total for this period' : 'All transaction totals (period)' }}</td>
                 <td class="num">{{ money(ledger.totalDebitMinor) }}</td>
                 <td class="num">{{ money(ledger.totalCreditMinor) }}</td>
                 <td class="num closing-cell">
@@ -547,6 +614,48 @@ watch(partyId, () => {
             </tfoot>
           </table>
         </div>
+
+        <!-- The desktop statement's six columns cannot fit a phone: a
+             sideways-scroll table hides the running balance. Mobile shows
+             the same posted journal data as accessible compact rows. -->
+        <ul class="party-mobile-journal" aria-label="Party transactions">
+          <li v-if="ledger !== null" class="party-mobile-opening">
+            <span>Opening balance <span class="sher-bn">শুরুর জের</span></span>
+            <strong :class="balanceClass(ledger.openingBalance.direction)">
+              {{ balanceText(ledger.openingBalance) }}
+            </strong>
+          </li>
+          <li v-for="row in visibleRows" :key="row.journalLineId" class="party-mobile-entry">
+            <div class="party-mobile-entry-head">
+              <strong>{{ documentLabel(row.sourceDocumentType) }}</strong>
+              <time>{{ row.businessDate }}</time>
+            </div>
+            <p class="party-mobile-document">{{ row.sourceNumber }}</p>
+            <div class="party-mobile-entry-amounts">
+              <span v-if="row.debitMinor !== 0">Debit <span class="sher-bn">ডেবিট</span> {{ money(row.debitMinor) }}</span>
+              <span v-if="row.creditMinor !== 0">Credit <span class="sher-bn">ক্রেডিট</span> {{ money(row.creditMinor) }}</span>
+            </div>
+            <div class="party-mobile-running">
+              <span>Balance <span class="sher-bn">জের</span></span>
+              <strong :class="runningBalanceClass(row.runningBalanceMinor)">
+                {{ runningBalanceText(row.runningBalanceMinor) }}
+              </strong>
+            </div>
+          </li>
+          <li v-if="ledger !== null" class="party-mobile-total">
+            <strong>{{ activityTab === 'ALL' ? 'Total for this period' : 'All transaction totals (period)' }} <span class="sher-bn">মোট</span></strong>
+            <div class="party-mobile-entry-amounts">
+              <span>Debit {{ money(ledger.totalDebitMinor) }}</span>
+              <span>Credit {{ money(ledger.totalCreditMinor) }}</span>
+            </div>
+            <div class="party-mobile-running">
+              <span>{{ closingLabel }} <span class="sher-bn">{{ closingLabelBn }}</span></span>
+              <strong :class="balanceClass(ledger.closingBalance.direction)">
+                {{ closingAmount }} <span class="sher-bn">{{ closingWord }}</span>
+              </strong>
+            </div>
+          </li>
+        </ul>
 
         <div v-if="ledger?.page.hasMore" class="paging">
           <button
@@ -604,7 +713,7 @@ watch(partyId, () => {
       @paid="onSupplierPaid"
       @close="paying = false"
     />
-  </AppShell>
+  </component>
 </template>
 
 <style scoped>
@@ -675,9 +784,10 @@ watch(partyId, () => {
   flex-wrap: wrap;
 }
 
-.ledger-head h1 {
+.ledger-head h1, .ledger-head h2 {
   margin: 0.25rem 0 0;
   font-size: 1.25rem;
+  overflow-wrap: anywhere;
 }
 
 .closing {
@@ -733,12 +843,12 @@ tfoot tr {
   background: var(--sher-subtle-bg, rgb(0 0 0 / 3%));
 }
 
-.balance-due {
-  color: var(--sher-bad-fg, #b91c1c);
+.balance-receivable {
+  color: var(--sher-ok);
 }
 
-.balance-advance {
-  color: var(--sher-ok-fg, #15803d);
+.balance-payable {
+  color: var(--sher-bad);
 }
 
 .balance-settled {
@@ -776,4 +886,99 @@ td.mono {
   justify-content: center;
   padding-top: 0.75rem;
 }
+
+/* HisabIQ underlined ledger tabs use the same posted journal. */
+.embedded-ledger { min-width: 0; }
+.embedded-ledger .ledger-head h2 { font-size: var(--sher-text-lg); font-weight: 600; }
+.embedded-ledger .hub-actions { gap: var(--sher-space-2); }
+.embedded-ledger .hub-actions .btn { min-height: var(--sher-control-h-sm); height: auto; font-size: var(--sher-text-sm); }
+/* Dense table on wide screens; legible, complete transaction rows on phones. */
+.party-mobile-journal { display: none; list-style: none; margin: 0; padding: 0; }
+@media screen and (max-width: 40rem) {
+  .table-wrap { display: none; }
+  .party-mobile-journal { display: flex; flex-direction: column; border: 1px solid var(--sher-line); border-radius: var(--sher-radius); overflow: hidden; }
+  .party-mobile-journal > li {
+    min-width: 0; padding: var(--sher-space-3);
+    border-bottom: 1px solid var(--sher-line-soft); font-size: var(--sher-text-sm);
+    font-variant-numeric: normal;
+  }
+  .party-mobile-journal > li:last-child { border-bottom: none; }
+  .party-mobile-opening, .party-mobile-running, .party-mobile-entry-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: var(--sher-space-2);
+  }
+  .party-mobile-opening, .party-mobile-total { background: var(--sher-sunken); }
+  .party-mobile-entry-head time {
+    color: var(--sher-text-muted); font-size: var(--sher-text-xs);
+  }
+  .party-mobile-document {
+    margin: 3px 0 var(--sher-space-2); color: var(--sher-text-muted);
+    font-size: var(--sher-text-xs); overflow-wrap: anywhere;
+  }
+  .party-mobile-entry-amounts {
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: var(--sher-space-2); color: var(--sher-text-muted);
+    font-size: var(--sher-text-xs);
+  }
+  .party-mobile-running { margin-top: var(--sher-space-2); }
+  .party-mobile-running strong { font-weight: 600; overflow-wrap: anywhere; text-align: right; }
+  .party-mobile-journal .sher-bn { font-size: var(--sher-text-xs); }
+  .party-mobile-total > strong { display: block; margin-bottom: var(--sher-space-2); }
+}
+@media print { .party-mobile-journal { display: none !important; } }
+
+.party-ledger-tabs {
+  display: flex; gap: var(--sher-space-4);
+  border-bottom: 1px solid var(--sher-line);
+  margin-top: var(--sher-space-3); overflow-x: auto;
+}
+.party-ledger-tab {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: var(--sher-space-3) var(--sher-space-1);
+  border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--sher-text-muted);
+  font: inherit; font-size: var(--sher-text-sm); white-space: nowrap; cursor: pointer;
+}
+.party-ledger-tab.is-active {
+  border-bottom-color: var(--sher-primary); color: var(--sher-primary-text); font-weight: 600;
+}
+.party-ledger-tab:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
+.party-filter-note {
+  margin: var(--sher-space-2) 0 0;
+  font-size: var(--sher-text-xs);
+  color: var(--sher-text-muted);
+}
+
+@media print { .party-ledger-tabs { display: none; } }
+
+.party-more-actions { display: inline-flex; flex-direction: column; position: relative; min-width: 6rem; }
+.party-more-actions summary {
+  display: inline-flex; align-items: center; gap: 6px; list-style: none;
+  min-height: 36px;
+  border: 1px solid var(--sher-line-strong); border-radius: var(--sher-radius);
+  padding: 8px 12px; color: var(--sher-text-muted);
+  cursor: pointer; font-size: var(--sher-text-sm);
+}
+.party-more-actions summary::-webkit-details-marker { display: none; }
+.party-more-actions summary:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: 2px; }
+/* A real compact More menu, never a full-width banner between the CTA
+   buttons and the ledger. Native details keeps keyboard/touch support. */
+.party-more-panel {
+  position: absolute; z-index: 10;
+  top: calc(100% + 4px); right: 0;
+  display: flex; flex-direction: column; gap: var(--sher-space-1);
+  min-width: 220px; max-width: min(280px, 90vw);
+  padding: var(--sher-space-2);
+  border: 1px solid var(--sher-line);
+  border-radius: var(--sher-radius);
+  background: var(--sher-raised);
+  box-shadow: var(--sher-shadow);
+}
+.party-more-panel .btn {
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+@media print { .party-more-actions { display: none !important; } }
 </style>

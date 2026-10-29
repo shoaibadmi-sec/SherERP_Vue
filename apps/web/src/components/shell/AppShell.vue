@@ -23,6 +23,8 @@ defineProps<{
   helpBn?: string;
   /** Trail above the title, most general first. The title is not repeated. */
   breadcrumb?: readonly string[];
+  /** A focused workspace can omit the related-page strip; other modules keep it. */
+  showFeatureNav?: boolean;
 }>();
 </script>
 
@@ -43,7 +45,7 @@ defineProps<{
       </div>
     </header>
 
-    <ModuleFeatureNav />
+    <ModuleFeatureNav v-if="showFeatureNav !== false" />
 
     <slot />
   </div>

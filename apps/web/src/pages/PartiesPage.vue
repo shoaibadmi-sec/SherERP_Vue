@@ -13,7 +13,7 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
 import Select from 'primevue/select';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { ApiError } from '../api/client';
@@ -39,6 +39,7 @@ import AppShell from '../components/shell/AppShell.vue';
 import { useConnectivity } from '../offline/connectivity';
 import PartyOpeningDialog from '../components/parties/PartyOpeningDialog.vue';
 import PartyFormPage from './PartyFormPage.vue';
+import PartyLedgerPage from './PartyLedgerPage.vue';
 
 /**
  * The Parties screen (Phase 2, §5.6, D-04) — a List screen (UI-22): role
@@ -67,6 +68,33 @@ function roleFromQuery(value: unknown): PartyRoleValue | null {
 }
 
 const role = ref<PartyRoleValue>(roleFromQuery(route.query.role) ?? 'CUSTOMER');
+type PartyView = 'WORKSPACE' | 'LIST';
+const workspaceMode = ref<PartyView>('WORKSPACE');
+const selectedPartyId = ref<string | null>(typeof route.query.id === 'string' ? route.query.id : null);
+const selectedParty = computed(() => parties.value.find((party) => party.id === selectedPartyId.value) ?? null);
+const ROLE_LABELS: Record<PartyRoleValue, { en: string; bn: string; icon: string }> = {
+  CUSTOMER: { en: 'Customers', bn: 'গ্রাহক', icon: 'pi pi-users' },
+  SUPPLIER: { en: 'Suppliers', bn: 'সরবরাহকারী', icon: 'pi pi-truck' },
+  VENDOR: { en: 'Vendors', bn: 'ভেন্ডর', icon: 'pi pi-briefcase' },
+};
+
+function changePartyRole(next: PartyRoleValue): void {
+  if (role.value === next) return;
+  selectedPartyId.value = null;
+  role.value = next;
+  void router.replace({ name: 'parties', query: { role: next } });
+}
+
+function chooseParty(party: PartyResponse): void {
+  selectedPartyId.value = party.id;
+  void router.replace({ name: 'parties', query: { role: role.value, id: party.id } });
+}
+
+function leaveParty(): void {
+  selectedPartyId.value = null;
+  void router.replace({ name: 'parties', query: { role: role.value } });
+}
+
 
 const RIGHTS: Record<PartyRoleValue, { view: string; create: string; edit: string; deactivate: string }> = {
   CUSTOMER: {
@@ -130,6 +158,14 @@ const nextCursor = ref<string | null>(null);
 const ANY = 'any';
 
 const search = ref('');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let requestSerial = 0;
+watch(search, () => {
+  if (workspaceMode.value !== 'WORKSPACE') return;
+  if (searchTimer !== null) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { void load(); }, 180);
+});
+onBeforeUnmount(() => { if (searchTimer !== null) clearTimeout(searchTimer); });
 const groupId = ref(ANY);
 const status = ref(ANY);
 const statusOptions = [
@@ -269,17 +305,23 @@ function sortBy(column: string): void {
 }
 
 async function load(): Promise<void> {
+  const requested = ++requestSerial;
   loading.value = true;
   loadError.value = null;
   try {
     const page = await fetchParties(session.accessToken.value ?? '', currentQuery());
+    if (requested !== requestSerial) return;
     parties.value = [...page.data];
     summary.value = page.summary;
     nextCursor.value = page.page.nextCursor;
+    if (selectedPartyId.value === null && typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 64rem)').matches) {
+      selectedPartyId.value = parties.value[0]?.id ?? null;
+    }
   } catch (cause) {
-    loadError.value = describe(cause);
+    if (requested === requestSerial) loadError.value = describe(cause);
   } finally {
-    loading.value = false;
+    if (requested === requestSerial) loading.value = false;
   }
 }
 
@@ -312,6 +354,7 @@ onMounted(async () => {
 
 watch(role, () => {
   groupId.value = ANY;
+  selectedPartyId.value = null;
   void load();
 });
 
@@ -319,8 +362,14 @@ watch(() => route.query.role, (value) => {
   const requested = roleFromQuery(value);
   if (requested !== null && accessibleRoles.value.includes(requested)) role.value = requested;
 });
+watch(() => route.query.id, (id) => {
+  if (typeof id === 'string') selectedPartyId.value = id;
+  else if (typeof window !== 'undefined' && (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 64rem)').matches))
+    selectedPartyId.value = null;
+});
 
 function clearFilters(): void {
+  if (searchTimer !== null) clearTimeout(searchTimer);
   search.value = '';
   groupId.value = ANY;
   status.value = ANY;
@@ -335,7 +384,7 @@ function clearFilters(): void {
  * happened, not to rename them. Editing is on the `⋯` menu and on the hub.
  */
 function openParty(party: PartyResponse): void {
-  void router.push(`/parties/${party.id}/ledger?role=${role.value}`);
+  chooseParty(party);
 }
 
 /* ------------------------------------------------------------------ balance */
@@ -370,14 +419,12 @@ function balanceText(party: PartyResponse): string {
  * by direction would have made a supplier the shop owes look as comfortable as
  * a customer who has paid.
  */
-function isOutstanding(direction: string): boolean {
-  return role.value === 'CUSTOMER' ? direction === 'RECEIVABLE' : direction === 'PAYABLE';
-}
-
 function balanceClass(party: PartyResponse): string {
   const { direction } = party.balance;
   if (direction === 'SETTLED') return 'balance-settled';
-  return isOutstanding(direction) ? 'balance-due' : 'balance-advance';
+  // Mirror the HisabIQ directory: receivable teal/green, payable red.
+  // A multi-role person has a single net balance in the SherERP API.
+  return direction === 'RECEIVABLE' ? 'balance-receivable' : 'balance-payable';
 }
 
 /**
@@ -462,6 +509,7 @@ async function onFormSaved(party: PartyResponse): Promise<void> {
   closeForm();
   notice.value = added ? `${party.name} added.` : `${party.name} saved.`;
   await load();
+  chooseParty(party);
 }
 
 async function onOpeningSaved(): Promise<void> {
@@ -566,9 +614,13 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
 <template>
   <AppShell
-    :title="PAGE_COPY[role].title"
-    :breadcrumb="['Dashboard', PAGE_COPY[role].title]"
-    :help-bn="PAGE_COPY[role].helpBn"
+    :title="workspaceMode === 'WORKSPACE' ? 'Parties & Ledger' : PAGE_COPY[role].title"
+    :breadcrumb="['Dashboard', workspaceMode === 'WORKSPACE' ? 'Parties & Ledger' : PAGE_COPY[role].title]"
+    :help-bn="workspaceMode === 'WORKSPACE' ? 'পার্টি ও খাতা' : PAGE_COPY[role].helpBn"
+    :class="{
+      'party-workspace-view': workspaceMode === 'WORKSPACE',
+      'party-detail-open': workspaceMode === 'WORKSPACE' && selectedPartyId !== null,
+    }"
   >
     <template #actions>
       <button
@@ -617,6 +669,124 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
     <OfflineBar />
 
+    <!-- HisabIQ combined directory + context-ledger, using the real SherERP API. -->
+    <section v-if="workspaceMode === 'WORKSPACE'" class="party-workspace" aria-label="People and ledgers">
+
+
+      <p v-if="notice" class="notice is-ok" role="status">{{ notice }}</p>
+      <ErrorNotice v-if="loadError" :code="loadError.code" :message="loadError.message" />
+
+      <div class="party-workspace-grid" :class="{ 'has-selection': selectedPartyId !== null }">
+        <section class="party-directory" aria-label="Party directory">
+          <form class="party-directory-toolbar" @submit.prevent="load">
+            <SearchField
+              v-model="search"
+              field-id="party-search"
+              label="Search people"
+              placeholder="Name or phone · নাম বা ফোন"
+              @search="load"
+            />
+      <nav class="party-role-tabs" aria-label="Party role">
+        <button
+          v-for="choice in accessibleRoles"
+          :key="choice"
+          type="button"
+          class="party-role-tab"
+          :class="{ 'is-active': role === choice }"
+          :aria-current="role === choice ? 'page' : 'false'"
+          @click="changePartyRole(choice)"
+        >
+          <i :class="ROLE_LABELS[choice].icon" aria-hidden="true" />
+          {{ ROLE_LABELS[choice].en }}
+          <span class="sher-bn">{{ ROLE_LABELS[choice].bn }}</span>
+        </button>
+        <button type="button" class="party-mode-switch" @click="workspaceMode = 'LIST'">
+          <i class="pi pi-list" aria-hidden="true" /> Table view
+        </button>
+      </nav>
+            <div class="party-directory-filters">
+              <Select v-if="showsGroups" v-model="groupId" input-id="filter-group"
+                :options="groupOptions" option-label="name" option-value="id"
+                aria-label="Customer group" @change="load" />
+              <Select v-model="status" input-id="filter-status"
+                :options="statusOptions" option-label="label" option-value="value"
+                aria-label="Party status" @change="load" />
+              <button v-if="filtersActive" type="button" class="linkish"
+                @click="clearFilters">Clear filters</button>
+            </div>
+          </form>
+          <div class="party-directory-summary">
+            <span>{{ parties.length }} of {{ summary.total }} {{ ROLE_LABELS[role].en.toLowerCase() }}</span>
+            <button type="button" class="party-sort" :aria-label="'Sort parties by balance'"
+              @click="sortBy('balance')">
+              Balance <i class="pi pi-sort-amount-down" aria-hidden="true" />
+            </button>
+          </div>
+          <div v-if="loading" class="skeleton skeleton-table" aria-busy="true" />
+          <EmptyState v-else-if="parties.length === 0" icon="pi-users" title="No people found">
+            Try another name or clear the filters.
+          </EmptyState>
+          <ul v-else class="party-directory-list">
+            <li v-for="person in parties" :key="person.id">
+              <button
+                type="button"
+                class="party-directory-person"
+                :class="{ 'is-selected': selectedPartyId === person.id }"
+                :aria-current="selectedPartyId === person.id ? 'true' : 'false'"
+                :aria-label="`${person.name}, ${balanceText(person)}`"
+                @click="chooseParty(person)"
+              >
+                <span class="party-directory-avatar" aria-hidden="true">{{ initials(person.name) }}</span>
+                <span class="party-directory-identity">
+                  <strong>{{ person.name }}</strong>
+                  <span class="party-directory-meta">
+                    {{ person.phone ?? 'No phone' }}
+                    <span v-if="person.roles.length > 1" class="party-role-count">
+                      · {{ person.roles.length }} roles
+                    </span>
+                  </span>
+                </span>
+                <span class="party-directory-money" :class="balanceClass(person)">
+                  {{ balanceText(person) }}
+                </span>
+              </button>
+            </li>
+          </ul>
+          <div v-if="nextCursor !== null" class="party-directory-more">
+            <button type="button" class="btn btn-ghost" :disabled="busy"
+              @click="showMore">{{ busy ? 'Loading…' : 'Show more people' }}</button>
+          </div>
+        </section>
+
+        <section class="party-detail" :aria-label="selectedParty ? `${selectedParty.name} ledger` : 'Selected party ledger'">
+          <button v-if="selectedPartyId" type="button" class="party-mobile-back"
+            @click="leaveParty">
+            <i class="pi pi-arrow-left" aria-hidden="true" /> All people <span class="sher-bn">সব পার্টি</span>
+          </button>
+          <PartyLedgerPage
+            v-if="selectedPartyId"
+            :key="`${role}:${selectedPartyId}`"
+            embedded
+            :embedded-party-id="selectedPartyId"
+            :embedded-role="role"
+            @back="leaveParty"
+            @updated="load"
+          />
+          <div v-else class="party-detail-empty">
+            <i class="pi pi-address-book" aria-hidden="true" />
+            <strong>Select a person</strong>
+            <span>Choose a name to see their balance, transactions and actions.</span>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <template v-else>
+      <div class="party-list-switch">
+        <button type="button" class="btn btn-ghost" @click="workspaceMode = 'WORKSPACE'">
+          <i class="pi pi-arrow-left" aria-hidden="true" /> Party workspace <span class="sher-bn">পার্টি খাতা</span>
+        </button>
+      </div>
     <form class="filters" @submit.prevent="load">
       <div class="field grow">
         <SearchField
@@ -907,6 +1077,8 @@ async function removeGroup(id: string, name: string): Promise<void> {
 
     </template>
 
+    </template>
+
     <Menu ref="rowMenu" :model="rowMenuItems" popup />
 
     <!--
@@ -1118,12 +1290,11 @@ async function removeGroup(id: string, name: string): Promise<void> {
 }
 
 /* Outstanding is the one that needs attention, so it is the loud one. */
-.balance-due {
-  color: var(--sher-bad-fg, #b91c1c);
+.balance-receivable {
+  color: var(--sher-ok);
 }
-
-.balance-advance {
-  color: var(--sher-ok-fg, #15803d);
+.balance-payable {
+  color: var(--sher-bad);
 }
 
 .balance-settled {
@@ -1356,5 +1527,184 @@ tbody tr.is-inactive td:not(.actions) {
 
 .group-list input {
   flex: 1;
+}
+
+/* HisabIQ Party layout with the original ERP blue brand controls.
+   Receivable/payable semantic colors remain distinct from the brand. */
+.party-workspace {
+  --sher-control-h: 36px;
+  min-width: 0;
+}
+.party-role-tabs {
+  display: flex; align-items: stretch; gap: var(--sher-space-4);
+  border-bottom: 1px solid var(--sher-line);
+  overflow-x: auto; margin-bottom: var(--sher-space-3);
+}
+.party-role-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: none; padding: var(--sher-space-3) var(--sher-space-1);
+  border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--sher-text-muted);
+  font: inherit; font-size: var(--sher-text-sm); cursor: pointer;
+}
+.party-role-tab.is-active {
+  border-bottom-color: var(--sher-primary); color: var(--sher-primary-text); font-weight: 600;
+}
+.party-role-tab .sher-bn { font-size: var(--sher-text-xs); }
+.party-mode-switch {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  flex: none; border: none; background: transparent;
+  color: var(--sher-text-muted); font: inherit; font-size: var(--sher-text-xs); cursor: pointer;
+}
+.party-workspace-grid {
+  display: grid; grid-template-columns: minmax(278px, 340px) minmax(0, 1fr);
+  align-items: start; gap: var(--sher-space-3); min-width: 0;
+}
+.party-directory, .party-detail {
+  min-width: 0; background: var(--sher-raised);
+  border: 1px solid var(--sher-line); border-radius: var(--sher-radius-lg);
+}
+.party-directory { overflow: hidden; }
+.party-directory-toolbar {
+  display: flex; flex-direction: column; gap: var(--sher-space-2);
+  padding: var(--sher-space-3);
+  border-bottom: 1px solid var(--sher-line);
+}
+.party-directory-filters { display: flex; gap: var(--sher-space-2); align-items: center; min-width: 0; }
+.party-directory-filters > * { flex: 1; min-width: 0; }
+.party-directory-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: var(--sher-space-2); padding: var(--sher-space-2) var(--sher-space-3);
+  color: var(--sher-text-muted); font-size: var(--sher-text-xs);
+  border-bottom: 1px solid var(--sher-line);
+}
+.party-sort { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.party-directory-list { margin: 0; padding: 0; list-style: none; max-height: min(68vh, 780px); overflow-y: auto; }
+.party-directory-person {
+  /* Put the amount on its own aligned line: a long shop name and a large
+     balance must not fight for the same 340px directory row. */
+  display: grid; grid-template-columns: 32px minmax(0,1fr);
+  grid-template-rows: auto auto; align-items: center;
+  column-gap: var(--sher-space-2); row-gap: 2px;
+  width: 100%; min-height: 70px; padding: var(--sher-space-2) var(--sher-space-3);
+  border: 0; border-bottom: 1px solid var(--sher-line-soft);
+  background: transparent; color: var(--sher-text); text-align: left; font: inherit;
+  cursor: pointer;
+}
+.party-directory-person:hover { background: var(--sher-hover); }
+.party-directory-person.is-selected { background: var(--sher-primary-soft); }
+.party-directory-avatar {
+  grid-row: 1 / span 2;
+  display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: var(--sher-radius-pill); background: var(--sher-surface-muted);
+  color: var(--sher-text-muted); font-size: var(--sher-text-xs); font-weight: 600;
+}
+.party-directory-identity { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.party-directory-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--sher-text-sm); font-weight: 600; }
+.party-directory-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sher-text-muted); font-size: var(--sher-text-xs); }
+.party-directory-money {
+  grid-column: 2; grid-row: 2; justify-self: end; min-width: 0;
+  text-align: right; font-size: var(--sher-text-xs); font-weight: 600;
+  white-space: nowrap;
+}
+.party-directory-money.balance-settled { color: var(--sher-text-muted); }
+.party-workspace :deep(.num), .party-workspace :deep(.mono) {
+  font-variant-numeric: normal;
+  font-family: var(--sher-font);
+}
+.party-directory-more { padding: var(--sher-space-3); display: flex; justify-content: center; }
+/* The embedded AppCard already provides its own border and padding.
+   Avoid a visually heavy double-border around the real ledger. */
+.party-detail { padding: 0; border: 0; background: transparent; }
+.party-detail-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 320px; gap: var(--sher-space-2);
+  color: var(--sher-text-muted); font-size: var(--sher-text-sm); text-align: center;
+}
+.party-detail-empty i { font-size: 24px; }
+.party-detail-empty strong { color: var(--sher-text); font-weight: 600; }
+.party-mobile-back { display: none; }
+.party-list-switch { display: flex; justify-content: flex-end; padding-bottom: var(--sher-space-2); }
+.party-role-tab:focus-visible, .party-mode-switch:focus-visible,
+.party-directory-person:focus-visible, .party-sort:focus-visible,
+.party-mobile-back:focus-visible { outline: 2px solid var(--sher-primary); outline-offset: -2px; }
+@media (max-width: 63.99rem) {
+  /* On a selected person's screen, use the scarce first-screen space for the
+     name, balance and ledger—not the directory's Add/Import header and tabs.
+     The labelled All people button takes the user straight back to these. */
+  .party-detail-open :deep(.page-head),
+  .party-detail-open .party-role-tabs { display: none; }
+  .party-workspace-grid { grid-template-columns: minmax(0, 1fr); }
+  .party-workspace-grid.has-selection .party-directory { display: none; }
+  .party-workspace-grid:not(.has-selection) .party-detail { display: none; }
+  .party-directory-list { max-height: none; }
+  .party-mobile-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 0; background: transparent; color: var(--sher-primary-text);
+    min-height: 44px; padding: var(--sher-space-2) var(--sher-space-3);
+    margin-bottom: var(--sher-space-2);
+    font: inherit; font-size: var(--sher-text-sm); cursor: pointer;
+  }
+}
+@media (max-width: 40rem) {
+  /* The original stacked Add and Import actions cost two whole phone rows.
+     Give Add its 48px primary tap target and keep Import alongside it. */
+  .party-workspace-view :deep(.page-actions) {
+    display: flex; align-items: center; gap: var(--sher-space-2);
+  }
+  .party-workspace-view :deep(.page-actions .btn-primary) {
+    order: -1; flex: 1; min-width: 0; height: 48px;
+  }
+  .party-workspace-view :deep(.page-actions .btn-ghost) {
+    flex: 0 0 auto; height: 40px;
+  }
+  .party-mode-switch { font-size: 0; }
+  .party-mode-switch i { font-size: var(--sher-text-base); }
+  .party-role-tabs { gap: var(--sher-space-3); }
+  .party-role-tab { gap: 4px; }
+  .party-role-tab .sher-bn { display: none; }
+  .party-detail { padding: 0; }
+}
+
+/* Match HisabIQ's embedded role chips and three-column directory rows.
+   Pure presentation: role selection, party data, and ledger calls are unchanged. */
+.party-workspace-grid { grid-template-columns:minmax(330px,380px) minmax(0,1fr); gap:16px; }
+.party-directory { border-radius:12px; }
+.party-role-tabs { flex-wrap:wrap; overflow:visible; gap:4px; margin:0;
+  padding:0; border:0; }
+.party-role-tab { display:inline-flex; min-height:27px; gap:4px; align-items:center;
+  padding:5px 8px; border:0; border-radius:7px; background:var(--sher-sunken);
+  color:var(--sher-text-muted); font-size:11px; font-weight:500; }
+.party-role-tab .sher-bn { display:none; }
+.party-role-tab.is-active { background:var(--sher-primary); color:var(--sher-on-primary); }
+.party-role-tab.is-active:hover { color:var(--sher-on-primary); }
+.party-mode-switch { margin-left:auto; padding:4px 7px; font-size:11px; }
+.party-directory-person { position:relative; display:grid;
+  grid-template-columns:34px minmax(0,1fr) minmax(74px,auto); grid-template-rows:auto;
+  column-gap:9px; min-height:62px; padding:8px 12px; border-left:2px solid transparent;
+  border-bottom:1px solid var(--sher-line-soft); }
+.party-directory-person.is-selected { border-left-color:var(--sher-primary); background:color-mix(in srgb, var(--sher-primary-soft) 45%, var(--sher-raised)); }
+.party-directory-avatar { grid-column:1; grid-row:1; width:34px; height:34px; }
+.party-directory-identity { grid-column:2; grid-row:1; gap:3px; }
+.party-directory-identity strong { font-size:12.5px; font-weight:600; }
+.party-directory-meta { font-size:10.5px; }
+.party-directory-money { grid-column:3; grid-row:1; justify-self:end; font-size:12px;
+  font-variant-numeric:normal; }
+.party-directory-list { max-height:calc(100vh - 296px); min-height:320px; }
+.party-directory-summary { text-transform:uppercase; letter-spacing:.03em; font-size:10px; }
+.party-directory-toolbar { gap:8px; }
+@media (max-width:63.99rem) {
+  .party-workspace-grid {grid-template-columns:minmax(0,1fr);}
+  .party-directory-list {max-height:none; min-height:0;}
+}
+@media(max-width:40rem) {
+  .party-role-tabs { gap:4px; }
+  .party-role-tab {font-size:10.5px; padding-inline:7px;}
+  .party-directory-person { grid-template-columns:34px minmax(0,1fr) minmax(66px,auto); }
+}
+@media print {
+  .party-directory, .party-role-tabs, .party-mobile-back, .party-list-switch { display: none !important; }
+  .party-workspace-grid { display: block; }
+  .party-detail { border: 0; padding: 0; }
 }
 </style>

@@ -478,8 +478,10 @@ function useAnotherAccount(): void {
             <RouterLink to="/forgot-password">Forgot your password?</RouterLink>
             <br />
             <RouterLink to="/forgot-password">
-              First time here? Set your password
+              Already added by your owner? Set your password
             </RouterLink>
+            <br />
+            <RouterLink to="/register">New business? Create an account</RouterLink>
           </p>
         </form>
 

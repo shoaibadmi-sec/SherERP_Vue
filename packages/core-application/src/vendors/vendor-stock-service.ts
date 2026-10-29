@@ -19,7 +19,7 @@ import type { Outbox } from '../ports/outbox';
 import type { PeriodGuard } from '../ports/period-guard';
 import type { TenantContext } from '../ports/tenant-context';
 import type { Tx, UnitOfWork } from '../ports/unit-of-work';
-import { effectiveSettings, settingValuesOf } from '../settings/feature-dependencies';
+import { isFeatureOn, settingValuesOf } from '../settings/feature-dependencies';
 import type { SettingsRepository } from '../settings/settings-repository';
 import type { VendorReceiptRow, VendorStockRepository } from './vendor-stock-repository';
 
@@ -450,8 +450,10 @@ export class VendorStockService {
   }
 
   private async assertConsignmentOn(tx: Tx, ctx: TenantContext): Promise<void> {
-    const values = effectiveSettings(settingValuesOf(await this.settings.listStored(tx, ctx)));
-    if (values.get(SettingKey.VENDOR_CONSIGNMENT_ENABLED) !== 'ON') {
+    const values = settingValuesOf(await this.settings.listStored(tx, ctx));
+    // Toggle values are lower-case 'on'/'off' in the setting catalogue.
+    // Reuse the central dependency-aware reader, never compare to 'ON'.
+    if (!isFeatureOn(values, SettingKey.VENDOR_CONSIGNMENT_ENABLED)) {
       throw new AppError(
         ErrorCode.FEATURE_DISABLED,
         'Vendor stock is switched off for this shop — turn it on in Settings',

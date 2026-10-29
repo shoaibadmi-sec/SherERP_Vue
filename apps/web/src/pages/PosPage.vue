@@ -887,7 +887,24 @@ async function onSearchEnter(): Promise<void> {
   if (chosen === undefined) return;
   addToCart(chosen);
   clearSearch();
-  await focusSearch();
+  await focusCartQuantity(chosen.id);
+}
+
+/** Search → quantity → search, without posting or modifying the sale. */
+async function focusCartQuantity(productId: string): Promise<void> {
+  await nextTick();
+  const index = lines.value.findIndex((line) => line.productId === productId);
+  if (index < 0) return;
+  const input = document.querySelectorAll<HTMLInputElement>('.cart__line .cart__qty input').item(index);
+  input?.focus();
+  input?.select();
+}
+
+function onCartQuantityEnter(event: KeyboardEvent): void {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.closest('.cart__qty') === null) return;
+  event.preventDefault();
+  void focusSearch();
 }
 
 function clearSearch(): void {
@@ -906,6 +923,11 @@ function moveHighlight(by: number): void {
 }
 
 function onKey(event: KeyboardEvent): void {
+  if (event.key === 'F2') {
+    event.preventDefault();
+    void focusSearch();
+    return;
+  }
   if (event.key === 'F4' && readyToSell.value && !saving.value) {
     event.preventDefault();
     confirming.value = true;
@@ -1105,56 +1127,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppShell title="POS — New Sale" help-bn="নতুন বিক্রি">
-    <div class="pos">
-      <!-- One bar, always ready: type a name, or let the scanner type for you. -->
-      <div class="scanbar">
-        <i class="pi pi-search scanbar__icon" aria-hidden="true" />
-        <input
-          id="pos-search"
-          v-model="search"
-          class="scanbar__input"
-          type="search"
-          inputmode="search"
-          enterkeyhint="done"
-          placeholder="Scan barcode, or type any part of a name, brand or code…"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-          @keydown.enter.prevent="onSearchEnter"
-          @keydown.down.prevent="moveHighlight(1)"
-          @keydown.up.prevent="moveHighlight(-1)"
-          @keydown.esc.prevent="clearSearch"
-        />
-        <button
-          v-if="search !== ''"
-          type="button"
-          class="scanbar__clear"
-          title="Clear (Esc)"
-          @click="clearSearch(); void focusSearch()"
-        >
-          <i class="pi pi-times" />
-        </button>
-        <button
-          v-if="drafts.length > 0"
-          type="button"
-          class="scanbar__drafts"
-          @click="showDrafts = true"
-        >
-          <i class="pi pi-inbox" /> Drafts ({{ drafts.length }})
-        </button>
-        <button
-          v-if="session.can('catalog.product.create')"
-          type="button"
-          class="scanbar__add"
-          title="Add a product"
-          @click="openAddProduct"
-        >
-          <i class="pi pi-plus" />
-        </button>
+  <AppShell title="New sale" help-bn="নতুন বিক্রি" :show-feature-nav="false">
+    <template #actions>
+      <div class="pos__keyboard-hints" aria-label="POS keyboard shortcuts">
+        <i class="pi pi-keyboard" aria-hidden="true" />
+        <span><kbd>F2</kbd> Search</span>
+        <span><kbd>Enter</kbd> Next</span>
+        <span><kbd>F4</kbd> Complete</span>
       </div>
-
+    </template>
+    <div class="pos" data-ui="hisabiq-pos-v2">
       <div v-if="correctingSaleId" class="warnbar">
         <div>
           <p class="warnbar__title">Correcting invoice {{ correctingNumber }}</p>
@@ -1184,180 +1166,14 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="pos__body">
-        <!-- ------------------------------------------------ the catalogue -->
-        <section class="panel catalogue">
-          <div class="catalogue__filters">
-            <div class="chips">
-              <button
-                v-for="chip in categoryChips"
-                :key="`c-${chip.id}`"
-                type="button"
-                class="chip"
-                :class="{ 'chip--on': categoryId === chip.id }"
-                @click="categoryId = chip.id"
-              >
-                {{ chip.name }}
-              </button>
-            </div>
-            <div class="catalogue__viewtoggle">
-              <button
-                type="button"
-                class="seg"
-                :class="{ 'seg--on': view === 'GRID' }"
-                @click="view = 'GRID'"
-              >
-                <i class="pi pi-th-large" /> Grid
-              </button>
-              <button
-                type="button"
-                class="seg"
-                :class="{ 'seg--on': view === 'LIST' }"
-                @click="view = 'LIST'"
-              >
-                <i class="pi pi-list" /> List
-              </button>
-            </div>
-          </div>
-          <div class="chips chips--quiet">
-            <button
-              v-for="chip in brandChips"
-              :key="`b-${chip.id}`"
-              type="button"
-              class="chip chip--sm"
-              :class="{ 'chip--on': brandId === chip.id }"
-              @click="brandId = chip.id"
-            >
-              {{ chip.name }}
-            </button>
-          </div>
-
-          <p v-if="loadingProducts && shown.length === 0" class="muted">Loading…</p>
-
-          <!--
-            Phase 18.2. One state used to serve two very different situations,
-            and it said «Nothing matched ""» to a shop that had simply not
-            entered its products yet — which reads as a broken screen on the
-            first morning. Compact rather than the full dashed `EmptyState`
-            box: this panel is half a selling screen, and the counter needs the
-            grid back the moment the search is cleared.
-          -->
-          <p v-else-if="shown.length === 0 && search === '' && categoryId === ''" class="empty">
-            No products to sell yet.
-            <button
-              v-if="session.can('catalog.product.create')"
-              type="button"
-              class="btn btn-ghost"
-              @click="openAddProduct"
-            >
-              Add the first product
-            </button>
-          </p>
-          <p v-else-if="shown.length === 0" class="empty">
-            Nothing matched
-            <template v-if="search !== ''">“{{ search }}”</template>
-            <template v-else>this category</template>.
-            <button type="button" class="btn btn-ghost" @click="clearSearch(); categoryId = ''; void focusSearch()">
-              Show everything
-            </button>
-          </p>
-
-          <div v-else :class="view === 'GRID' ? 'grid' : 'list'">
-            <button
-              v-for="(product, index) in shown"
-              :id="`pos-tile-${String(index)}`"
-              :key="product.id"
-              type="button"
-              class="tile"
-              :class="{ 'tile--on': index === highlighted }"
-              @click="addToCart(product)"
-              @mouseenter="highlighted = index"
-            >
-              <span class="tile__image">
-                <img
-                  v-if="product.hasImage"
-                  :src="`/api/v1/products/${product.id}/image`"
-                  :alt="product.name"
-                />
-                <span v-else class="tile__letters">{{ product.name.slice(0, 2) }}</span>
-              </span>
-              <span class="tile__text">
-                <span class="tile__name">{{ product.name }}</span>
-                <span class="tile__meta">
-                  {{ product.brandName ?? '—' }} · {{ product.unitName }}
-                </span>
-                <span class="tile__foot">
-                  <span class="tile__price">
-                    {{ taka(product.groupPriceMinor ?? product.sellingPriceMinor) }}
-                  </span>
-                  <span class="stock" :class="`stock--${product.stockStatus.toLowerCase()}`">
-                    {{ stockLabel(product) }}
-                  </span>
-                </span>
-              </span>
-            </button>
-          </div>
-        </section>
-
         <!-- ------------------------------------------------------ the cart -->
-        <aside class="panel cart">
-          <div class="cart__customer">
-            <div class="grid-2">
-              <label class="field">
-                <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
-                <InputText v-model="customerName" placeholder="Walk-in customer" />
-              </label>
-              <label class="field">
-                <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
-                <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
-              </label>
+        <aside class="panel cart" aria-label="Sale cart">
+          <div class="pos__left">
+          <div class="cart__editing">
+            <div class="cart__heading">
+              <strong>Sale items <span class="label-bn">বিক্রির পণ্য</span></strong>
+              <span>{{ lines.length }} {{ lines.length === 1 ? 'item' : 'items' }}</span>
             </div>
-
-            <Select
-              v-model="customerId"
-              :options="customerOptions"
-              option-label="label"
-              option-value="value"
-              filter
-              show-clear
-              placeholder="Or pick a saved customer"
-              class="cart__pick"
-            />
-
-            <p v-if="standing && standing.dueMinor > 0" class="standing standing--due">
-              <span>Outstanding Due <span class="label-bn">আগের বাকি</span></span>
-              <strong>{{ taka(standing.dueMinor) }}</strong>
-            </p>
-            <p v-else-if="standing && standing.advanceMinor > 0" class="standing standing--advance">
-              <span>Advance held <span class="label-bn">জমা আছে</span></span>
-              <strong>{{ taka(standing.advanceMinor) }}</strong>
-            </p>
-
-            <div class="cart__customer-links">
-              <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
-                {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
-              </button>
-              <button
-                type="button"
-                class="linkish"
-                :disabled="customerPhone.trim() === ''"
-                @click="router.push({ name: 'sales', query: { search: customerPhone } })"
-              >
-                Sales history for this phone
-              </button>
-            </div>
-
-            <div v-if="showMoreCustomer" class="grid-2">
-              <label class="field">
-                <span>Father Name <span class="label-bn">বাবার নাম</span></span>
-                <InputText v-model="guardianName" placeholder="Optional" />
-              </label>
-              <label class="field">
-                <span>Address <span class="label-bn">ঠিকানা</span></span>
-                <InputText v-model="address" placeholder="Optional" />
-              </label>
-            </div>
-          </div>
-
           <div class="cart__lines">
             <div v-if="lines.length === 0" class="cart__empty">
               <i class="pi pi-shopping-cart" />
@@ -1374,8 +1190,10 @@ onBeforeUnmount(() => {
               </div>
 
               <div v-for="(line, index) in lines" :key="line.productId" class="cart__line">
-                <div class="cart__line-main">
+                <div class="cart__line-main" @keydown.enter="onCartQuantityEnter">
                   <div class="cart__line-name">
+                    <span class="cart__line-index" aria-hidden="true">{{ index + 1 }}.</span>
+                    <span class="cart__line-icon" aria-hidden="true"><i class="pi pi-box" /></span>
                     <span class="cart__line-title" :title="line.productName">
                       {{ line.productName }}
                     </span>
@@ -1587,6 +1405,253 @@ onBeforeUnmount(() => {
             </template>
           </div>
 
+          <!-- One bar, always ready: type a name, or let the scanner type for you. -->
+          <div class="scanbar">
+            <i class="pi pi-search scanbar__icon" aria-hidden="true" />
+            <input
+              id="pos-search"
+              v-model="search"
+              aria-label="Scan barcode or search products"
+              aria-keyshortcuts="F2"
+              class="scanbar__input"
+              type="search"
+              inputmode="search"
+              enterkeyhint="done"
+              placeholder="Scan barcode, or type any part of a name, brand or code…"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              @keydown.enter.prevent="onSearchEnter"
+              @keydown.down.prevent="moveHighlight(1)"
+              @keydown.up.prevent="moveHighlight(-1)"
+              @keydown.esc.prevent="clearSearch"
+            />
+            <button
+              v-if="search !== ''"
+              type="button"
+              class="scanbar__clear"
+              aria-label="Clear product search"
+              title="Clear (Esc)"
+              @click="clearSearch(); void focusSearch()"
+            >
+              <i class="pi pi-times" />
+            </button>
+            <button
+              v-if="drafts.length > 0"
+              type="button"
+              class="scanbar__drafts"
+              @click="showDrafts = true"
+            >
+              <i class="pi pi-inbox" /> Drafts ({{ drafts.length }})
+            </button>
+            <button
+              v-if="session.can('catalog.product.create')"
+              type="button"
+              class="scanbar__add"
+              aria-label="Add product"
+              title="Add a product"
+              @click="openAddProduct"
+            >
+              <i class="pi pi-plus" />
+            </button>
+          </div>
+
+
+          </div> <!-- Cart table and inline add-product search -->
+
+            <!-- ------------------------------------------------ the catalogue -->
+            <section class="panel catalogue" :class="{ 'catalogue--compact': lines.length > 0 }" aria-label="Find products">
+              <div class="catalogue__heading">
+                <strong>Quick items <span class="label-bn">দ্রুত যোগ</span></strong>
+                <span>Tap to add · সহজে পণ্য যোগ করুন</span>
+              </div>
+              <div class="catalogue__filters">
+                <div class="chips">
+                  <button
+                    v-for="chip in categoryChips"
+                    :key="`c-${chip.id}`"
+                    type="button"
+                    class="chip"
+                    :class="{ 'chip--on': categoryId === chip.id }"
+                    :aria-pressed="categoryId === chip.id"
+                    @click="categoryId = chip.id"
+                  >
+                    {{ chip.name }}
+                  </button>
+                </div>
+                <div class="catalogue__viewtoggle">
+                  <button
+                    type="button"
+                    class="seg"
+                    :class="{ 'seg--on': view === 'GRID' }"
+                    @click="view = 'GRID'"
+                  >
+                    <i class="pi pi-th-large" /> Grid
+                  </button>
+                  <button
+                    type="button"
+                    class="seg"
+                    :class="{ 'seg--on': view === 'LIST' }"
+                    @click="view = 'LIST'"
+                  >
+                    <i class="pi pi-list" /> List
+                  </button>
+                </div>
+              </div>
+              <div class="chips chips--quiet">
+                <button
+                  v-for="chip in brandChips"
+                  :key="`b-${chip.id}`"
+                  type="button"
+                  class="chip chip--sm"
+                  :class="{ 'chip--on': brandId === chip.id }"
+                  :aria-pressed="brandId === chip.id"
+                  @click="brandId = chip.id"
+                >
+                  {{ chip.name }}
+                </button>
+              </div>
+
+              <p v-if="loadingProducts && shown.length === 0" class="muted">Loading…</p>
+
+              <!--
+                Phase 18.2. One state used to serve two very different situations,
+                and it said «Nothing matched ""» to a shop that had simply not
+                entered its products yet — which reads as a broken screen on the
+                first morning. Compact rather than the full dashed `EmptyState`
+                box: this panel is half a selling screen, and the counter needs the
+                grid back the moment the search is cleared.
+              -->
+              <p v-else-if="shown.length === 0 && search === '' && categoryId === ''" class="empty">
+                No products to sell yet.
+                <button
+                  v-if="session.can('catalog.product.create')"
+                  type="button"
+                  class="btn btn-ghost"
+                  @click="openAddProduct"
+                >
+                  Add the first product
+                </button>
+              </p>
+              <p v-else-if="shown.length === 0" class="empty">
+                Nothing matched
+                <template v-if="search !== ''">“{{ search }}”</template>
+                <template v-else>this category</template>.
+                <button type="button" class="btn btn-ghost" @click="clearSearch(); categoryId = ''; void focusSearch()">
+                  Show everything
+                </button>
+              </p>
+
+              <div v-else :class="view === 'GRID' ? 'grid' : 'list'">
+                <button
+                  v-for="(product, index) in shown"
+                  :id="`pos-tile-${String(index)}`"
+                  :key="product.id"
+                  type="button"
+                  class="tile"
+                  :class="{ 'tile--on': index === highlighted }"
+                  @click="addToCart(product)"
+                  @mouseenter="highlighted = index"
+                >
+                  <span class="tile__image">
+                    <img
+                      v-if="product.hasImage"
+                      :src="`/api/v1/products/${product.id}/image`"
+                      :alt="product.name"
+                    />
+                    <span v-else class="tile__letters">{{ product.name.slice(0, 2) }}</span>
+                  </span>
+                  <span class="tile__text">
+                    <span class="tile__name">{{ product.name }}</span>
+                    <span class="tile__meta">
+                      {{ product.brandName ?? '—' }} · {{ product.unitName }}
+                    </span>
+                    <span class="tile__foot">
+                      <span class="tile__price">
+                        {{ taka(product.groupPriceMinor ?? product.sellingPriceMinor) }}
+                      </span>
+                      <span class="stock" :class="`stock--${product.stockStatus.toLowerCase()}`">
+                        {{ stockLabel(product) }}
+                      </span>
+                    </span>
+                  </span>
+                  <i class="pi pi-plus tile__add" aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+
+          </div> <!-- left cart and quick items -->
+          <div class="cart__checkout">
+          <div class="cart__checkout-header">
+            <strong>New invoice <span class="label-bn">নতুন চালান</span></strong>
+            <span>Customer &amp; payments</span>
+          </div>
+          <div class="cart__customer">
+            <div class="cart__customer-picker">
+              <i class="pi pi-user" aria-hidden="true" />
+              <Select
+                v-model="customerId"
+                :options="customerOptions"
+                option-label="label"
+                option-value="value"
+                filter
+                show-clear
+                placeholder="Walk-in customer · Select a customer"
+                class="cart__pick"
+              />
+            </div>
+            <p v-if="standing && standing.dueMinor > 0" class="standing standing--due">
+              <span>Outstanding Due <span class="label-bn">আগের বাকি</span></span>
+              <strong>{{ taka(standing.dueMinor) }}</strong>
+            </p>
+            <p v-else-if="standing && standing.advanceMinor > 0" class="standing standing--advance">
+              <span>Advance held <span class="label-bn">জমা আছে</span></span>
+              <strong>{{ taka(standing.advanceMinor) }}</strong>
+            </p>
+            <details class="cart__invoice-customer-details">
+              <summary>
+                <span>Invoice customer details <span class="label-bn">ক্রেতার তথ্য</span></span>
+                <small>Name · Phone · Guardian · Address</small>
+              </summary>
+              <div class="cart__customer-fields">
+                <div class="grid-2">
+                  <label class="field">
+                    <span>Customer Name <span class="label-bn">কাস্টমারের নাম</span></span>
+                    <InputText v-model="customerName" placeholder="Walk-in customer" />
+                  </label>
+                  <label class="field">
+                    <span>Phone <span class="label-bn">ফোন নম্বর</span></span>
+                    <InputText v-model="customerPhone" placeholder="01XXXXXXXXX" />
+                  </label>
+                </div>
+                <div class="cart__customer-links">
+                  <button type="button" class="linkish" @click="showMoreCustomer = !showMoreCustomer">
+                    {{ showMoreCustomer ? '− Father name / address' : '+ Father name / address' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="linkish"
+                    :disabled="customerPhone.trim() === ''"
+                    @click="router.push({ name: 'sales', query: { search: customerPhone } })"
+                  >
+                    Sales history for this phone
+                  </button>
+                </div>
+                <div v-if="showMoreCustomer" class="grid-2">
+                  <label class="field">
+                    <span>Father Name <span class="label-bn">বাবার নাম</span></span>
+                    <InputText v-model="guardianName" placeholder="Optional" />
+                  </label>
+                  <label class="field">
+                    <span>Address <span class="label-bn">ঠিকানা</span></span>
+                    <InputText v-model="address" placeholder="Optional" />
+                  </label>
+                </div>
+              </div>
+            </details>
+          </div>
+
           <!-- Totals. Every one of these moves on every keystroke above. -->
           <div class="totals">
             <div class="totals__row">
@@ -1686,6 +1751,7 @@ onBeforeUnmount(() => {
             </span>
             <span class="complete__bn">সেল সম্পন্ন করুন</span>
           </button>
+          </div>
         </aside>
       </div>
     </div>
@@ -2752,5 +2818,329 @@ onBeforeUnmount(() => {
 .empty .btn {
   display: block;
   margin: 8px auto 0;
+}
+
+/* Original ERP blue accent; HisabIQ-inspired Vue layout retains existing sale APIs. */
+.pos {
+  --sher-control-h: 36px;
+  gap: var(--sher-space-2);
+}
+.scanbar {
+  height: 44px;
+  border-radius: var(--sher-radius-md);
+  box-shadow: none;
+}
+.scanbar__input {
+  font-size: var(--sher-text-base);
+  font-weight: 400;
+}
+.pos__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sher-space-2);
+  min-width: 0;
+}
+.catalogue {
+  width: 100%;
+  min-width: 0;
+  box-shadow: none;
+}
+.catalogue--compact {
+  padding: var(--sher-space-2) var(--sher-space-3);
+}
+.catalogue--compact .catalogue__filters,
+.catalogue--compact .chips--quiet {
+  display: none;
+}
+.catalogue--compact .grid,
+.catalogue--compact .list {
+  max-height: 104px;
+  overflow-y: auto;
+}
+.cart {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 352px);
+  gap: var(--sher-space-3);
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+  box-shadow: none;
+}
+.cart__editing {
+  min-width: 0;
+}
+.cart__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sher-space-2);
+  margin-bottom: var(--sher-space-3);
+  color: var(--sher-text);
+  font-size: var(--sher-text-base);
+}
+.cart__heading strong { font-weight: 600; }
+.cart__heading > span {
+  color: var(--sher-text-muted);
+  font-size: var(--sher-text-xs);
+}
+.cart__checkout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sher-space-3);
+  min-width: 0;
+  padding-left: var(--sher-space-3);
+  border-left: 1px solid var(--sher-line);
+}
+.cart__customer { padding-bottom: var(--sher-space-3); }
+.cart__lines {
+  max-height: min(70vh, 750px);
+  min-height: 92px;
+  min-width: 0;
+  overflow: auto;
+}
+.cart__head,
+.cart__line-main {
+  grid-template-columns: minmax(160px,1fr) 7.5rem 6.5rem 6.5rem 3.5rem;
+  min-width: 610px;
+  gap: var(--sher-space-2);
+}
+.cart__line-title { font-weight: 500; }
+.cart__line-total, .standing strong, .cart__cost {
+  font-variant-numeric: normal;
+}
+.complete {
+  min-height: 48px;
+  border-radius: var(--sher-radius-md);
+}
+.scanbar__clear:focus-visible,
+.scanbar__add:focus-visible,
+.tile:focus-visible,
+.cart button:focus-visible {
+  outline: 2px solid var(--sher-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 68rem) {
+  .cart {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .cart__checkout {
+    padding-left: 0;
+    padding-top: var(--sher-space-3);
+    border-left: 0;
+    border-top: 1px solid var(--sher-line);
+  }
+  .cart__lines { max-height: 48vh; }
+}
+@media (max-width: 40rem) {
+  .cart { padding: var(--sher-space-3); }
+  .cart__head, .cart__line-main { min-width: 555px; }
+  .catalogue--compact .grid,
+  .catalogue--compact .list { max-height: 100px; }
+}
+/* Source checkout's compact customer picker with optional identity disclosure. */
+.cart__customer-picker { display:flex; align-items:center; gap:8px; width:100%; min-width:0; }
+.cart__customer-picker > i { flex:none; width:28px; height:28px; display:grid; place-items:center;
+  border:1px solid var(--sher-line); border-radius:7px; background:var(--sher-sunken);
+  color:var(--sher-text-muted); }
+.cart__customer-picker .cart__pick { flex:1; min-width:0; }
+.cart__invoice-customer-details { border:1px solid var(--sher-line); border-radius:9px; }
+.cart__invoice-customer-details > summary { list-style:none; position:relative; display:flex;
+  flex-direction:column; gap:4px; padding:10px 30px 10px 12px; cursor:pointer; font-size:12px;
+  font-weight:600; color:var(--sher-text); background:var(--sher-sunken); border-radius:9px; }
+.cart__invoice-customer-details > summary::-webkit-details-marker { display:none; }
+.cart__invoice-customer-details > summary::after { content:'⌄'; position:absolute; right:12px;
+  top:12px; font-size:14px; color:var(--sher-text-muted); }
+.cart__invoice-customer-details[open] > summary::after { transform:rotate(180deg); }
+.cart__invoice-customer-details summary small {font-size:10px; font-weight:400; color:var(--sher-text-muted);}
+.cart__customer-fields {display:flex; flex-direction:column; gap:9px; padding:10px; }
+.cart__invoice-customer-details :is(input,button):focus-visible,
+.cart__invoice-customer-details > summary:focus-visible {outline:2px solid var(--sher-primary);outline-offset:2px;}
+/* HisabIQ layout parity: actual editable cart above standalone quick item cards. */
+.pos__left { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.cart__editing { min-width:0; }
+.cart__editing .scanbar { margin-top:10px; margin-bottom:0; min-height:40px; }
+.cart__line-name { display:grid; grid-template-columns:18px 28px minmax(0,1fr);
+  column-gap:6px; align-items:center; }
+.cart__line-index { grid-column:1; grid-row:1 / span 2; color:var(--sher-text-muted);
+  font-size:10px; font-weight:500; }
+.cart__line-icon { grid-column:2; grid-row:1 / span 2; width:28px; height:28px;
+  display:grid; place-items:center; background:var(--sher-sunken);
+  border:1px solid var(--sher-line); border-radius:6px; color:var(--sher-text-muted); }
+.cart__line-title { grid-column:3; grid-row:1; }
+.cart__line-sub { grid-column:3; grid-row:2; }
+.catalogue, .catalogue--compact { margin-top:0; padding:0; border:0; background:transparent; }
+.catalogue__heading { padding:0 1px; }
+.catalogue .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.catalogue .tile { border:1px solid var(--sher-line); border-radius:10px; background:var(--sher-raised); }
+.cart__checkout { align-self:start; }
+@media(max-width:40rem) { .catalogue .grid {grid-template-columns:repeat(2,minmax(0,1fr));} }
+/* Source-faithful HisabIQ POS hierarchy: cart first, quick items below, checkout right. */
+.pos__keyboard-hints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 7px 11px;
+  border: 1px solid var(--sher-line);
+  border-radius: 9px;
+  background: var(--sher-raised);
+  color: var(--sher-text-muted);
+  font-size: 11px;
+}
+.pos__keyboard-hints kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--sher-line);
+  border-radius: 4px;
+  background: var(--sher-sunken);
+  color: var(--sher-text);
+  font-size: 10px;
+}
+.pos__body { display: block; min-width: 0; }
+.cart {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 340px);
+  align-items: start;
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.cart__editing,
+.cart__checkout {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--sher-line);
+  border-radius: 12px;
+  background: var(--sher-raised);
+}
+.cart__editing { box-shadow: var(--sher-shadow-sm); }
+.cart__heading { margin-bottom: 10px; }
+.cart__checkout {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 1px solid var(--sher-line);
+  box-shadow: var(--sher-shadow-sm);
+}
+.cart__checkout-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--sher-line);
+}
+.cart__checkout-header strong { font-size: 14px; font-weight: 600; }
+.cart__checkout-header > span { font-size: 11px; color: var(--sher-text-muted); }
+.scanbar {
+  height: 42px;
+  margin-bottom: 12px;
+  padding-inline: 10px;
+  gap: 7px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.scanbar__input { font-size: 13px; }
+.cart__lines { min-height: 85px; max-height: min(60vh, 680px); }
+.catalogue,
+.catalogue--compact {
+  width: 100%;
+  padding: 16px 0 0;
+  margin-top: 16px;
+  border: 0;
+  border-top: 1px solid var(--sher-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.catalogue__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: var(--sher-text);
+  font-size: 13px;
+}
+.catalogue__heading strong { font-weight: 600; }
+.catalogue__heading > span { font-size: 11px; color: var(--sher-text-muted); }
+.catalogue .grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.catalogue--compact .grid,
+.catalogue--compact .list { max-height: 240px; overflow: auto; }
+.catalogue .tile,
+.catalogue .list .tile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 62px;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.catalogue .tile__image {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+}
+.catalogue .tile__text { min-width: 0; flex: 1; gap: 2px; }
+.catalogue .tile__name { font-size: 12px; font-weight: 550; }
+.catalogue .tile__meta { font-size: 10px; }
+.catalogue .tile__foot { gap: 4px; flex-wrap: wrap; }
+.catalogue .tile__price { font-size: 11px; font-weight: 600; }
+.catalogue .stock { font-size: 10px; }
+.tile__add { margin-left: auto; color: var(--sher-primary-text); font-size: 13px; }
+.cart__line-name { align-items: flex-start; }
+.cart__line-title { font-size: 12.5px; }
+/* HisabIQ typography: standard proportional numerals, never tabular/monospaced. */
+.pos .num,
+.pos .cart__line-total,
+.pos .cart__cost,
+.pos .tile__price,
+.pos .stock { font-variant-numeric: normal; }
+.totals__row--grand {
+  padding: 10px 11px;
+  border: 1px solid var(--sher-primary);
+  border-radius: 10px 10px 0 0;
+  background: var(--sher-primary-soft);
+}
+.totals__row--grand .num { font-size: 20px; color: var(--sher-primary-text); }
+.totals__words {
+  margin: -6px 0 0;
+  padding: 10px 11px;
+  border: 1px solid var(--sher-primary);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--sher-primary-soft);
+}
+@media (max-width: 68rem) {
+  .cart { grid-template-columns: minmax(0, 1fr); }
+  .cart__checkout {
+    position: static;
+    padding: 12px;
+    border: 1px solid var(--sher-line);
+  }
+  .cart__lines { max-height: 48vh; }
+}
+@media (max-width: 40rem) {
+  .pos__keyboard-hints { gap: 7px; }
+  .cart { padding: 0; }
+  .catalogue .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .catalogue__heading { align-items: flex-start; }
+  .catalogue__heading > span { max-width: 115px; text-align: right; }
+}
+@media (max-width: 350px) {
+  .catalogue .grid { grid-template-columns: minmax(0,1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos *, .pos *::before, .pos *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>

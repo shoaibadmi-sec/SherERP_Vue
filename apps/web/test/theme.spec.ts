@@ -42,10 +42,15 @@ describe('the per-device SherERP theme', () => {
       semantic: {
         colorScheme: {
           dark: {
+            formField: {
+              background: '#111418',
+              color: '#f5f5f5',
+              borderColor: '#393f47',
+            },
             surface: {
-              0: '#f8fafc',
-              900: '#0f1623',
-              950: '#080c14',
+              0: '#ffffff',
+              900: '#111418',
+              950: '#0b0d10',
             },
           },
         },

@@ -150,6 +150,8 @@ describe('the Inventory Report', () => {
   });
 
   it('shows the server’s refusal instead of an empty table', async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     load.mockRejectedValue(new ApiError('PERMISSION_DENIED', 'Permission required', 403));
     const wrapper = mount(InventoryReportPage);
     await flushPromises();

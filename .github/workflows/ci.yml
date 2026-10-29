@@ -53,6 +53,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # A clean checkout needs workspace dist/index.d.ts for downstream typechecks.
+      - name: build shared workspace packages before typechecking
+        run: pnpm --filter "./packages/**" build
+
       # Order is binding: lint, typecheck, boundaries, test. All must pass.
       - run: pnpm lint
       - run: pnpm typecheck

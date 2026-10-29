@@ -15,7 +15,7 @@
 | Fields | 392 |
 | Required fields | 74 |
 | Dropdowns | 94 |
-| Buttons and row actions | 427 |
+| Buttons and row actions | 434 |
 | Tables | 64 |
 | HTTP endpoints | 229 |
 | Permission codes | 119 |
@@ -46,7 +46,7 @@
 | LoginPage | `/login` | 4 | 0 | 9 | — | 🟡 PARTIALLY TESTED |
 | MoneyAccountsPage | `/finance/accounts` | 1 | 0 | 5 | — | ✅ TESTED |
 | MoneyReportPage | `/reports/money` | 3 | 1 | 3 | — | 🟡 PARTIALLY TESTED |
-| PartiesPage | `/parties` | 5 | 2 | 15 | — | 🟡 PARTIALLY TESTED |
+| PartiesPage | `/parties` | 5 | 2 | 22 | — | 🟡 PARTIALLY TESTED |
 | PartyFormPage | `/parties/:id` | 14 | 3 | 6 | — | 🟡 PARTIALLY TESTED |
 | PartyLedgerPage | `/parties/:id/ledger` | 3 | 1 | 10 | — | 🟡 PARTIALLY TESTED |
 | PeriodsPage | `/settings/periods` | 0 | 0 | 1 | — | ✅ TESTED |
@@ -80,7 +80,7 @@
 | VendorWorkspacePage | `/vendors/workspace` | 1 | 1 | 9 | — | 🟡 PARTIALLY TESTED |
 | WarrantyClaimPage | `/warranty/:id` | 0 | 0 | 1 | — | ✅ TESTED |
 | WarrantyClaimsPage | `/warranty` | 5 | 0 | 3 | 📱 | 🟡 PARTIALLY TESTED |
-| CancelDocumentDialog | _(dialog)_ | 1 | 0 | 2 | — | ❌ NOT TESTED |
+| CancelDocumentDialog | _(dialog)_ | 1 | 0 | 2 | — | ✅ TESTED |
 | ConfirmDialog | _(dialog)_ | 0 | 0 | 2 | — | ❌ NOT TESTED |
 | DateOnlyPicker | _(dialog)_ | 1 | 0 | 0 | — | 🟡 PARTIALLY TESTED |
 | ManageListDialog | _(dialog)_ | 2 | 0 | 5 | — | 🟡 PARTIALLY TESTED |
@@ -88,13 +88,13 @@
 | ProductForm | _(dialog)_ | 28 | 6 | 7 | — | 🟡 PARTIALLY TESTED |
 | QuickAddSelect | _(dialog)_ | 1 | 1 | 1 | — | 🟡 PARTIALLY TESTED |
 | SearchField | _(dialog)_ | 1 | 0 | 1 | — | ❌ NOT TESTED |
-| StockAdjustDialog | _(dialog)_ | 4 | 1 | 2 | — | ❌ NOT TESTED |
+| StockAdjustDialog | _(dialog)_ | 4 | 1 | 2 | — | 🟡 PARTIALLY TESTED |
 | StockLotsDialog | _(dialog)_ | 1 | 1 | 1 | — | ❌ NOT TESTED |
 | ReplaceBackupSecretDialog | _(dialog)_ | 3 | 0 | 2 | — | ❌ NOT TESTED |
 | ResetBusinessDialog | _(dialog)_ | 2 | 0 | 3 | — | ❌ NOT TESTED |
 | RestoreDialog | _(dialog)_ | 2 | 0 | 2 | — | ❌ NOT TESTED |
 | QuickAddProductDialog | _(dialog)_ | 6 | 2 | 2 | — | ❌ NOT TESTED |
-| ChangeTransactionDateDialog | _(dialog)_ | 4 | 0 | 2 | — | ❌ NOT TESTED |
+| ChangeTransactionDateDialog | _(dialog)_ | 4 | 0 | 2 | — | 🟡 PARTIALLY TESTED |
 | DaybookSheet | _(dialog)_ | 0 | 0 | 0 | — | ❌ NOT TESTED |
 | AmountInput | _(dialog)_ | 1 | 0 | 0 | — | ❌ NOT TESTED |
 | ComboField | _(dialog)_ | 1 | 1 | 2 | — | ❌ NOT TESTED |
@@ -109,7 +109,7 @@
 | ImportStatementDialog | _(dialog)_ | 4 | 0 | 2 | — | ❌ NOT TESTED |
 | ManageLoanAccountsDialog | _(dialog)_ | 0 | 0 | 4 | — | ❌ NOT TESTED |
 | MoneyAccountPicker | _(dialog)_ | 1 | 0 | 1 | — | ❌ NOT TESTED |
-| RecordExpenseDialog | _(dialog)_ | 7 | 3 | 2 | — | ❌ NOT TESTED |
+| RecordExpenseDialog | _(dialog)_ | 7 | 3 | 2 | — | 🟡 PARTIALLY TESTED |
 | ReopenDayDialog | _(dialog)_ | 2 | 1 | 2 | — | ❌ NOT TESTED |
 | StartDayDialog | _(dialog)_ | 3 | 1 | 2 | — | ❌ NOT TESTED |
 | StartReconciliationDialog | _(dialog)_ | 2 | 0 | 2 | — | ❌ NOT TESTED |
@@ -120,13 +120,13 @@
 | ReplaceWriterDialog | _(dialog)_ | 4 | 1 | 2 | — | ❌ NOT TESTED |
 | PartyOpeningDialog | _(dialog)_ | 3 | 1 | 2 | — | ❌ NOT TESTED |
 | AddLandedCostDialog | _(dialog)_ | 7 | 3 | 2 | — | ❌ NOT TESTED |
-| PaySupplierDialog | _(dialog)_ | 4 | 1 | 3 | — | ❌ NOT TESTED |
+| PaySupplierDialog | _(dialog)_ | 4 | 1 | 3 | — | 🟡 PARTIALLY TESTED |
 | PurchaseReturnDialog | _(dialog)_ | 5 | 2 | 5 | — | ❌ NOT TESTED |
 | ProfitTargetDialog | _(dialog)_ | 2 | 1 | 2 | — | ❌ NOT TESTED |
 | ReportScreen | _(dialog)_ | 2 | 0 | 4 | — | ❌ NOT TESTED |
 | WhyDialog | _(dialog)_ | 0 | 0 | 0 | — | ❌ NOT TESTED |
 | InvoicePreviewDialog | _(dialog)_ | 0 | 0 | 11 | — | ⬜ NOT APPLICABLE |
-| ReceivePaymentDialog | _(dialog)_ | 3 | 1 | 2 | — | ❌ NOT TESTED |
+| ReceivePaymentDialog | _(dialog)_ | 3 | 1 | 2 | — | 🟡 PARTIALLY TESTED |
 | SalesReturnDialog | _(dialog)_ | 9 | 2 | 6 | — | ❌ NOT TESTED |
 | GlobalSearchDialog | _(dialog)_ | 1 | 0 | 0 | — | ❌ NOT TESTED |
 | GiveProductsToVendorDialog | _(dialog)_ | 5 | 2 | 2 | — | ❌ NOT TESTED |
@@ -764,7 +764,7 @@
 | **Optional fields** | search, filter-group, filter-status, new-group, Rename … |
 | **Dropdowns** | filter-group, filter-status |
 | **Primary action** | Add, Add the first, Reactivate |
-| **Secondary actions** | Customer groups, Import, Clear, Try again, Clear the filters, Show more, Cancel, Close |
+| **Secondary actions** | Customer groups, Import, Table view, Clear filters, Balance, No phone 1" class="party-role-count"> · roles, Show more people, All people … (+7) |
 | **Row actions** | Open …'s ledger, Actions for … |
 | **Destructive actions** | Delete, Remove |
 | **Opens** | PartyOpeningDialog |
@@ -774,7 +774,7 @@
 | **Business effects** | createCustomerGroup, deleteParty, fetchParties, fetchPartySetup, removeCustomerGroup, renameCustomerGroup, setPartyStatus |
 | **Permissions** | party.group.manage |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | component, playwright |
+| **Responsible tests** | component, playwright, playwright-mobile |
 | **Status** | 🟡 PARTIALLY TESTED |
 | **Gaps** | dropdown filter-group, dropdown filter-status, action Add, action Add the first, action Delete, action Reactivate, action Remove |
 
@@ -821,8 +821,8 @@
 | **Required fields** | — |
 | **Optional fields** | ledger-from, ledger-to, ledger-page-size |
 | **Dropdowns** | ledger-page-size |
-| **Primary action** | Vendor workspace, Receive payment, New sale, Pay supplier |
-| **Secondary actions** | ← Back to list, New purchase, Edit details, Set opening balance, Print statement, Show more |
+| **Primary action** | Vendor workspace, Receive payment, Pay supplier |
+| **Secondary actions** | ← Back to list, New sale, New purchase, Edit details, Set opening balance, Print statement, Show more |
 | **Row actions** | — |
 | **Destructive actions** | — |
 | **Opens** | PartyOpeningDialog, ReceivePaymentDialog, PaySupplierDialog |
@@ -832,9 +832,9 @@
 | **Business effects** | fetchParty, fetchPartyLedger, fetchPartyOpening |
 | **Permissions** | sale.payment.record, sale.invoice.create, party.vendor.view, purchase.payment.record, purchase.bill.create |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | playwright |
+| **Responsible tests** | playwright, playwright-mobile |
 | **Status** | 🟡 PARTIALLY TESTED |
-| **Gaps** | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action New sale, action Pay supplier |
+| **Gaps** | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action Pay supplier |
 
 ### PeriodsPage
 
@@ -875,12 +875,12 @@
 | **Kind** | PAGE |
 | **Route** | `/pos` |
 | **Roles** | sale.invoice.create |
-| **Fields** | pos-search (TEXT) ⚠ no accessible name, customerName (TEXT), customerPhone (TEXT), customerId (SEARCHABLE_SELECT) ⚠ no accessible name, guardianName (TEXT), address (TEXT), line.qty (MONEY) ⚠ no accessible name, line.price (MONEY) ⚠ no accessible name, line.lineDiscount (MONEY) ⚠ no accessible name, line.selectedOwnedSerialIds (CHECKBOX) ⚠ no accessible name, line.vendorPartyId (SEARCHABLE_SELECT) ⚠ no accessible name, line.vendorAllocation (MONEY) ⚠ no accessible name, line.selectedVendorSerialIds (CHECKBOX) ⚠ no accessible name, line.negativeAllocation (MONEY) ⚠ no accessible name, discount (MONEY) ⚠ no accessible name, payment.accountId (SELECT) ⚠ no accessible name, payment.amount (MONEY) ⚠ no accessible name |
+| **Fields** | pos-search (TEXT), line.qty (MONEY) ⚠ no accessible name, line.price (MONEY) ⚠ no accessible name, line.lineDiscount (MONEY) ⚠ no accessible name, line.selectedOwnedSerialIds (CHECKBOX) ⚠ no accessible name, line.vendorPartyId (SEARCHABLE_SELECT) ⚠ no accessible name, line.vendorAllocation (MONEY) ⚠ no accessible name, line.selectedVendorSerialIds (CHECKBOX) ⚠ no accessible name, line.negativeAllocation (MONEY) ⚠ no accessible name, customerName (TEXT), customerPhone (TEXT), customerId (SEARCHABLE_SELECT) ⚠ no accessible name, guardianName (TEXT), address (TEXT), discount (MONEY) ⚠ no accessible name, payment.accountId (SELECT) ⚠ no accessible name, payment.amount (MONEY) ⚠ no accessible name |
 | **Required fields** | — |
-| **Optional fields** | pos-search, customerName, customerPhone, customerId, guardianName, address, line.qty, line.price, line.lineDiscount, line.selectedOwnedSerialIds, line.vendorPartyId, line.vendorAllocation, line.selectedVendorSerialIds, line.negativeAllocation, discount, payment.accountId, payment.amount |
-| **Dropdowns** | customerId (searchable), line.vendorPartyId (searchable), payment.accountId |
+| **Optional fields** | pos-search, line.qty, line.price, line.lineDiscount, line.selectedOwnedSerialIds, line.vendorPartyId, line.vendorAllocation, line.selectedVendorSerialIds, line.negativeAllocation, customerName, customerPhone, customerId, guardianName, address, discount, payment.accountId, payment.amount |
+| **Dropdowns** | line.vendorPartyId (searchable), customerId (searchable), payment.accountId |
 | **Primary action** | Sell anyway, Confirm Allocation |
-| **Secondary actions** | Clear (Esc), Drafts ( ), Add a product, Leave it alone, Grid, List, Add the first product, Show everything … (+15) |
+| **Secondary actions** | Leave it alone, Clear product search, Drafts ( ), Add product, Show purchase price, Discount on this item, Stock allocation unresolved Review, Add a vendor … (+15) |
 | **Row actions** | — |
 | **Destructive actions** | Remove …, Remove this payment, Delete this draft |
 | **Opens** | ConfirmDialog, InvoicePreviewDialog, StartDayDialog, VendorStockReceiveDialog |
@@ -892,7 +892,7 @@
 | **Desktop / mobile** | desktop + mobile layout guard |
 | **Responsible tests** | playwright, playwright-mobile |
 | **Status** | 🟡 PARTIALLY TESTED |
-| **Gaps** | dropdown customerId, dropdown line.vendorPartyId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
+| **Gaps** | dropdown line.vendorPartyId, dropdown customerId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
 
 ### ProductFormPage
 
@@ -1762,9 +1762,9 @@
 | **Business effects** | — |
 | **Permissions** | — |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself |
+| **Responsible tests** | component |
+| **Status** | ✅ TESTED |
+| **Gaps** | — |
 
 ### ConfirmDialog
 
@@ -1994,9 +1994,9 @@
 | **Business effects** | adjustStock |
 | **Permissions** | — |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself, required field stock-amount, required field stock-note, dropdown stock-reason, action Save adjustment |
+| **Responsible tests** | component |
+| **Status** | 🟡 PARTIALLY TESTED |
+| **Gaps** | required field stock-amount, required field stock-note, dropdown stock-reason, action Save adjustment |
 
 ### StockLotsDialog
 
@@ -2168,9 +2168,9 @@
 | **Business effects** | changeTransactionDate, fetchTransactionDateContext |
 | **Permissions** | — |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself, required field redate-date, action Change date |
+| **Responsible tests** | component |
+| **Status** | 🟡 PARTIALLY TESTED |
+| **Gaps** | required field redate-date, action Change date |
 
 ### DaybookSheet
 
@@ -2603,9 +2603,9 @@
 | **Business effects** | correctExpense, recordExpense, fetchAccounts, fetchDayStatus, fetchParties |
 | **Permissions** | period.backdate |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself, dropdown categoryId, dropdown accountId, dropdown payeeId, action Save |
+| **Responsible tests** | component |
+| **Status** | 🟡 PARTIALLY TESTED |
+| **Gaps** | dropdown categoryId, dropdown accountId, dropdown payeeId, action Save |
 
 ### ReopenDayDialog
 
@@ -2922,9 +2922,9 @@
 | **Business effects** | fetchAccounts, fetchDayStatus, fetchSupplierDue, paySupplier |
 | **Permissions** | — |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself, dropdown pay-account |
+| **Responsible tests** | component |
+| **Status** | 🟡 PARTIALLY TESTED |
+| **Gaps** | dropdown pay-account |
 
 ### PurchaseReturnDialog
 
@@ -3096,9 +3096,9 @@
 | **Business effects** | fetchAccounts, fetchDayStatus, fetchCustomerStanding, receiveCustomerPayment |
 | **Permissions** | — |
 | **Desktop / mobile** | desktop |
-| **Responsible tests** | — |
-| **Status** | ❌ NOT TESTED |
-| **Gaps** | the screen itself, dropdown accountId |
+| **Responsible tests** | component |
+| **Status** | 🟡 PARTIALLY TESTED |
+| **Gaps** | dropdown accountId |
 
 ### SalesReturnDialog
 
@@ -3552,11 +3552,11 @@
 | GET | `/api/v1/settings/security` | SecurityController | — | ✅ TESTED |
 | POST | `/api/v1/settings/security/password` | SecurityController | — | ✅ TESTED |
 | POST | `/api/v1/settings/security/pin` | SecurityController | — | ✅ TESTED |
-| GET | `/api/v1/reports/sales` | ReportsController | — | ❌ NOT TESTED |
-| GET | `/api/v1/reports/purchases` | ReportsController | — | ❌ NOT TESTED |
-| GET | `/api/v1/reports/stock` | ReportsController | — | ❌ NOT TESTED |
-| GET | `/api/v1/reports/money` | ReportsController | — | ❌ NOT TESTED |
-| GET | `/api/v1/reports/performance` | ReportsController | — | ❌ NOT TESTED |
+| GET | `/api/v1/reports/sales` | ReportsController | — | ✅ TESTED |
+| GET | `/api/v1/reports/purchases` | ReportsController | — | ✅ TESTED |
+| GET | `/api/v1/reports/stock` | ReportsController | — | ✅ TESTED |
+| GET | `/api/v1/reports/money` | ReportsController | — | ✅ TESTED |
+| GET | `/api/v1/reports/performance` | ReportsController | — | ✅ TESTED |
 | GET | `/api/v1/reports/why` | ReportsController | — | ❌ NOT TESTED |
 | GET | `/api/v1/reports/target` | TargetsController | — | ❌ NOT TESTED |
 | PUT | `/api/v1/reports/target` | TargetsController | — | ❌ NOT TESTED |
@@ -3610,14 +3610,14 @@
 | POST | `/api/v1/vendor-workspace/product-settlements` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
 | GET | `/api/v1/vendor-workspace/summary/:vendorPartyId` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
 | GET | `/api/v1/vendor-workspace/activity/:vendorPartyId` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
-| POST | `/api/v1/vendor-workspace/payments` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
+| POST | `/api/v1/vendor-workspace/payments` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ✅ TESTED |
 | POST | `/api/v1/vendor-workspace/receipts` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
 | POST | `/api/v1/vendor-workspace/issues` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
 | POST | `/api/v1/vendor-workspace/issues/returns` | VendorWorkspaceController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
 | GET | `/api/v1/vendor-stock` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
-| GET | `/api/v1/vendor-stock/settlement/:vendorPartyId` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
-| POST | `/api/v1/vendor-stock` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
-| POST | `/api/v1/vendor-stock/returns` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ❌ NOT TESTED |
+| GET | `/api/v1/vendor-stock/settlement/:vendorPartyId` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ✅ TESTED |
+| POST | `/api/v1/vendor-stock` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ✅ TESTED |
+| POST | `/api/v1/vendor-stock/returns` | VendorStockController | COST_VIEW, SUPPLIER_VIEW, VENDOR_ISSUE_MANAGE, VENDOR_PAYMENT_RECORD … (+3) | ✅ TESTED |
 | POST | `/api/v1/serials` | SerialsController | COST_VIEW, WARRANTY_CLAIM_MANAGE, WARRANTY_CLAIM_VIEW | ❌ NOT TESTED |
 | GET | `/api/v1/serials/progress/:purchaseId` | SerialsController | COST_VIEW, WARRANTY_CLAIM_MANAGE, WARRANTY_CLAIM_VIEW | ❌ NOT TESTED |
 | GET | `/api/v1/serials/available/:productId` | SerialsController | COST_VIEW, WARRANTY_CLAIM_MANAGE, WARRANTY_CLAIM_VIEW | ❌ NOT TESTED |
@@ -3769,9 +3769,9 @@
 | Stock count | start count → enter counted → post variance → stock matches | ✅ TESTED |
 | Serial-tracked product | receive with serials → sell one serial → serial no longer sellable | ❌ NOT TESTED |
 | Expiry-tracked product | receive with expiry → expiring report → sell oldest first | ❌ NOT TESTED |
-| Vendor stock out and back | give products to vendor → vendor settles → receive back | ❌ NOT TESTED |
+| Vendor stock out and back | give products to vendor → vendor settles → receive back | ✅ TESTED |
 | Money transfer between accounts | transfer → source falls → destination rises → no P&L effect | ✅ TESTED |
 | Bank reconciliation | start → import statement → match → complete | ❌ NOT TESTED |
 | Permission-sensitive action | role without code → UI hides → route refuses → API returns 403 | ✅ TESTED |
 | Offline trading and sync | go offline → sell → come back → queue drains | ❌ NOT TESTED |
-| Report generation | sales report → purchase report → stock report → money report | ❌ NOT TESTED |
+| Report generation | sales report → purchase report → stock report → money report | ✅ TESTED |

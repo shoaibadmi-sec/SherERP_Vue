@@ -11,6 +11,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DashboardPage from '../src/pages/DashboardPage.vue';
+import { useSession } from '../src/auth/session';
 
 /**
  * UI-44: one component test per slice screen — renders, shows loading, shows
@@ -40,6 +41,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  useSession().clear();
   localStorage.clear();
 });
 
@@ -63,6 +65,8 @@ describe('DashboardPage', () => {
   });
 
   it("shows the server's error code and a retry, never a generic message", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     const { ApiError } = await import('../src/api/client');
     summary.mockRejectedValue(new ApiError('NOT_FOUND', 'Business not found', 404));
 

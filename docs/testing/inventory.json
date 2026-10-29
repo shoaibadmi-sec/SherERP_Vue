@@ -2138,7 +2138,7 @@
       "fields": [
         {
           "id": "search",
-          "label": "Search …s",
+          "label": "Search people",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",
@@ -2205,6 +2205,34 @@
         {
           "label": "Add",
           "role": "PRIMARY"
+        },
+        {
+          "label": "Table view",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Clear filters",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Balance",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "No phone 1\" class=\"party-role-count\"> · roles",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Show more people",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "All people",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Party workspace",
+          "role": "SECONDARY"
         },
         {
           "label": "Clear",
@@ -2545,7 +2573,7 @@
         },
         {
           "label": "New sale",
-          "role": "PRIMARY"
+          "role": "SECONDARY"
         },
         {
           "label": "Pay supplier",
@@ -2672,51 +2700,11 @@
       "fields": [
         {
           "id": "pos-search",
-          "label": "Scan barcode, or type any part of a name, brand or code…",
-          "labelled": false,
+          "label": "Scan barcode or search products",
+          "labelled": true,
           "kind": "TEXT",
           "required": "NO",
           "inputMode": "search"
-        },
-        {
-          "id": "customerName",
-          "label": "Customer Name",
-          "labelled": true,
-          "kind": "TEXT",
-          "required": "NO",
-          "inputMode": null
-        },
-        {
-          "id": "customerPhone",
-          "label": "Phone",
-          "labelled": true,
-          "kind": "TEXT",
-          "required": "NO",
-          "inputMode": null
-        },
-        {
-          "id": "customerId",
-          "label": "Or pick a saved customer",
-          "labelled": false,
-          "kind": "SEARCHABLE_SELECT",
-          "required": "NO",
-          "inputMode": null
-        },
-        {
-          "id": "guardianName",
-          "label": "Father Name",
-          "labelled": true,
-          "kind": "TEXT",
-          "required": "NO",
-          "inputMode": null
-        },
-        {
-          "id": "address",
-          "label": "Address",
-          "labelled": true,
-          "kind": "TEXT",
-          "required": "NO",
-          "inputMode": null
         },
         {
           "id": "line.qty",
@@ -2783,6 +2771,46 @@
           "inputMode": null
         },
         {
+          "id": "customerName",
+          "label": "Customer Name",
+          "labelled": true,
+          "kind": "TEXT",
+          "required": "NO",
+          "inputMode": null
+        },
+        {
+          "id": "customerPhone",
+          "label": "Phone",
+          "labelled": true,
+          "kind": "TEXT",
+          "required": "NO",
+          "inputMode": null
+        },
+        {
+          "id": "customerId",
+          "label": "Or pick a saved customer",
+          "labelled": false,
+          "kind": "SEARCHABLE_SELECT",
+          "required": "NO",
+          "inputMode": null
+        },
+        {
+          "id": "guardianName",
+          "label": "Father Name",
+          "labelled": true,
+          "kind": "TEXT",
+          "required": "NO",
+          "inputMode": null
+        },
+        {
+          "id": "address",
+          "label": "Address",
+          "labelled": true,
+          "kind": "TEXT",
+          "required": "NO",
+          "inputMode": null
+        },
+        {
           "id": "discount",
           "label": "discount",
           "labelled": false,
@@ -2809,16 +2837,16 @@
       ],
       "dropdowns": [
         {
-          "id": "customerId",
-          "label": "Or pick a saved customer",
-          "optionsExpression": "customerOptions",
+          "id": "line.vendorPartyId",
+          "label": "Which vendor — কোন ভেন্ডার",
+          "optionsExpression": "vendorOptions",
           "searchable": true,
           "dependsOn": []
         },
         {
-          "id": "line.vendorPartyId",
-          "label": "Which vendor — কোন ভেন্ডার",
-          "optionsExpression": "vendorOptions",
+          "id": "customerId",
+          "label": "Or pick a saved customer",
+          "optionsExpression": "customerOptions",
           "searchable": true,
           "dependsOn": []
         },
@@ -2832,18 +2860,6 @@
       ],
       "actions": [
         {
-          "label": "Clear (Esc)",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "Drafts ( )",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "Add a product",
-          "role": "SECONDARY"
-        },
-        {
           "label": "Leave it alone",
           "role": "SECONDARY"
         },
@@ -2852,31 +2868,15 @@
           "role": "PRIMARY"
         },
         {
-          "label": "Grid",
+          "label": "Clear product search",
           "role": "SECONDARY"
         },
         {
-          "label": "List",
+          "label": "Drafts ( )",
           "role": "SECONDARY"
         },
         {
-          "label": "Add the first product",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "Show everything",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "·",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "+ Father name / address",
-          "role": "SECONDARY"
-        },
-        {
-          "label": "Sales history for this phone",
+          "label": "Add product",
           "role": "SECONDARY"
         },
         {
@@ -2910,6 +2910,34 @@
         {
           "label": "Confirm Allocation",
           "role": "PRIMARY"
+        },
+        {
+          "label": "Grid",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "List",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Add the first product",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Show everything",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "·",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "+ Father name / address",
+          "role": "SECONDARY"
+        },
+        {
+          "label": "Sales history for this phone",
+          "role": "SECONDARY"
         },
         {
           "label": "Exact amount",
@@ -8928,7 +8956,7 @@
       "fields": [
         {
           "id": "query",
-          "label": "Search products, parties and documents",
+          "label": "Search products, customers, suppliers and documents",
           "labelled": true,
           "kind": "TEXT",
           "required": "NO",

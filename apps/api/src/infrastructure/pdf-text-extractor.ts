@@ -101,6 +101,31 @@ export class PdfTextExtractor implements StatementExtractor {
    * should not pay for it again.
    */
   private async load(): Promise<PdfJsModule> {
+    /*
+     * The repository's supported Node runtime is 20 (.nvmrc). pdf.js 6 uses
+     * Promise.withResolvers, which Node 20 does not provide. Supply the
+     * standard ES2024 behavior once, before loading the ESM PDF adapter, so
+     * statement imports work on the actual supported server runtime.
+     */
+    type Resolver<T> = {
+      promise: Promise<T>;
+      resolve: (value: T | PromiseLike<T>) => void;
+      reject: (reason?: unknown) => void;
+    };
+    const ctor = Promise as PromiseConstructor & {
+      withResolvers?: <T>() => Resolver<T>;
+    };
+    if (ctor.withResolvers === undefined) {
+      ctor.withResolvers = <T>(): Resolver<T> => {
+        let resolve!: Resolver<T>['resolve'];
+        let reject!: Resolver<T>['reject'];
+        const promise = new Promise<T>((accept, decline) => {
+          resolve = accept;
+          reject = decline;
+        });
+        return { promise, resolve, reject };
+      };
+    }
     this.module ??= (await import('pdfjs-dist/legacy/build/pdf.mjs')) as unknown as PdfJsModule;
     return this.module;
   }

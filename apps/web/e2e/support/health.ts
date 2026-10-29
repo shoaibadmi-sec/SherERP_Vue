@@ -31,6 +31,9 @@ export interface HealthOptions {
   readonly expectFailedRequests?: readonly string[];
   /** Console text this spec deliberately provokes. */
   readonly expectConsole?: readonly RegExp[];
+  /** During a multi-route sweep Vite modules from the previous navigation may
+   * be canceled by Chromium. Still fail API/network errors and all other assets. */
+  readonly ignoreViteNavigationAborts?: boolean;
 }
 
 /**
@@ -83,6 +86,15 @@ export function watchHealth(page: Page, options: HealthOptions = {}): HealthRepo
   page.on('requestfailed', (request: Request) => {
     const url = request.url();
     if (IGNORED_REQUESTS.some((pattern) => pattern.test(url))) return;
+    // Only the screen sweep may ignore a browser-canceled dev-server module.
+    // Navigating away during Vite's lazy imports aborts in-flight JS/CSS and
+    // does not indicate a failed API request, missing resource, or render error.
+    const path = new URL(url).pathname;
+    const canceledViteModule = options.ignoreViteNavigationAborts === true
+      && request.method() === 'GET'
+      && request.failure()?.errorText === 'net::ERR_ABORTED'
+      && (path.startsWith('/src/') || path.startsWith('/@fs/'));
+    if (canceledViteModule) return;
     problems.push(`request failed: ${request.method()} ${url} — ${request.failure()?.errorText ?? ''}`);
   });
 
