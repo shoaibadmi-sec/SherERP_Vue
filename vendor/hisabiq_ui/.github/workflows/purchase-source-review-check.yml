@@ -1,0 +1,16 @@
+name: Purchase Source Review Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/purchase-source-review-browser.cjs

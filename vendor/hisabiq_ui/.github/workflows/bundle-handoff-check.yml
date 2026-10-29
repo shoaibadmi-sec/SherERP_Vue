@@ -1,0 +1,23 @@
+name: Bundle Handoff Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  quote-online-pos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and test handoff context
+        run: |
+          npx tsc --noEmit
+          node --experimental-strip-types --test tests/bundleHandoff.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify quote, online and POS mobile review
+        run: node scripts/bundle-handoff-browser.cjs

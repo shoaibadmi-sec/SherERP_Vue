@@ -1,0 +1,26 @@
+name: Numeric Steppers Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: node --experimental-strip-types --test tests/numericStep.test.ts
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/shared-cart-responsive-browser.cjs
+      - run: node scripts/numeric-steppers-browser.cjs
+      - run: node scripts/mobile-carts-browser.cjs
+      - run: node scripts/pos-responsive-cart-browser.cjs
+      - run: npm run test:compound-units
+      - run: npm run test:product-quick-add
+      - run: npm run test:field-alignment

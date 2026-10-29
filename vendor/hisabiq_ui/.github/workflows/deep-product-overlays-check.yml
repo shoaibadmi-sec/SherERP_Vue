@@ -1,0 +1,23 @@
+name: Deep Product Overlay Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  interactions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/deep-product-overlay-browser.cjs
+      - name: Save measured journeys and failure screenshots/traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deep-product-overlay-evidence
+          path: .superpowers/deep-audit/product-overlays
+          if-no-files-found: error

@@ -1,0 +1,295 @@
+[
+  {
+    "id": "parties",
+    "category": "parties",
+    "title": "Party identity, balance & role actions",
+    "bn": "পক্ষের পরিচয়, ব্যালেন্স ও সম্পর্কের কাজ",
+    "wide": true,
+    "status": "existing",
+    "sources": [
+      "src/components/parties/partyRoleActions.ts",
+      "src/components/parties/RoleBadge.tsx",
+      "src/components/PartyAvatar.tsx",
+      "src/components/parties/PartyBalanceCard.tsx"
+    ],
+    "states": [
+      "Customer",
+      "Supplier",
+      "Owner",
+      "Lender",
+      "Borrower",
+      "Vendor",
+      "Payee",
+      "disabled refund",
+      "context preview"
+    ]
+  },
+  {
+    "id": "reports",
+    "category": "tables",
+    "title": "Report search, comparison, filters, columns & saved views",
+    "bn": "রিপোর্টে খোঁজা, তুলনা, ফিল্টার, কলাম ও ভিউ",
+    "wide": true,
+    "status": "existing",
+    "sources": [
+      "src/components/reports/ReportToolbar.tsx",
+      "src/components/reports/ReportGuidance.tsx",
+      "src/components/ColumnVisibilityEditor.tsx",
+      "src/components/Table.tsx",
+      "src/components/StatusBadge.tsx"
+    ],
+    "states": [
+      "search",
+      "two-month calendar",
+      "comparison",
+      "filter chips",
+      "columns",
+      "saved views",
+      "source drilldown",
+      "empty results"
+    ]
+  },
+  {
+    "id": "buttons",
+    "category": "forms",
+    "title": "Buttons, icons, busy state & choice controls",
+    "bn": "বোতাম, আইকন, লোডিং ও বিকল্প",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/Button.tsx",
+      "src/components/Switch.tsx"
+    ],
+    "states": [
+      "primary",
+      "outline",
+      "secondary",
+      "ghost",
+      "destructive",
+      "link",
+      "icon",
+      "disabled",
+      "loading",
+      "36px normal",
+      "48px terminal",
+      "radio"
+    ]
+  },
+  {
+    "id": "cards",
+    "category": "tables",
+    "title": "Page header, summary cards & charts",
+    "bn": "পর্দার শিরোনাম, সারাংশ কার্ড ও চার্ট",
+    "wide": true,
+    "status": "existing",
+    "sources": [
+      "src/components/PageHeader.tsx",
+      "src/components/Panel.tsx",
+      "src/components/dashboard/MetricCard.tsx",
+      "src/components/dashboard/SalesTrendChart.tsx",
+      "src/components/dashboard/CashflowChart.tsx"
+    ],
+    "states": [
+      "receivable",
+      "payable",
+      "sample values",
+      "chart legend",
+      "chart detail",
+      "responsive",
+      "source navigation"
+    ]
+  },
+  {
+    "id": "inputs",
+    "category": "forms",
+    "title": "Input states & focused search",
+    "bn": "ইনপুটের অবস্থা ও ফোকাসসহ খোঁজা",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/Input.tsx"
+    ],
+    "states": [
+      "default",
+      "hover",
+      "focus",
+      "clear",
+      "invalid",
+      "read-only",
+      "disabled",
+      "multiline"
+    ]
+  },
+  {
+    "id": "quantities",
+    "category": "forms",
+    "title": "Number, money, unit & compound quantity",
+    "bn": "সংখ্যা, টাকা, একক ও যৌগিক পরিমাণ",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/NumericInput.tsx",
+      "src/components/MoneyUnitInput.tsx",
+      "src/components/transactions/CompoundQuantityInput.tsx",
+      "src/components/transactions/MultiUnitQuantityInput.tsx",
+      "src/components/AmountInWordsDisplay.tsx"
+    ],
+    "states": [
+      "stepper",
+      "keyboard",
+      "focused wheel",
+      "joined shell",
+      "compound units",
+      "multi-unit chain",
+      "Bangla amount words"
+    ]
+  },
+  {
+    "id": "selectors",
+    "category": "forms",
+    "title": "Select, searchable entity & Quick Add",
+    "bn": "বাছাই, খোঁজা ও নতুন যোগ",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/AppSelect.tsx",
+      "src/components/SearchSelect.tsx",
+      "src/components/QuickAddDialog.tsx"
+    ],
+    "states": [
+      "closed",
+      "open",
+      "keyboard",
+      "search",
+      "no match",
+      "create",
+      "duplicate",
+      "cancel",
+      "auto-select"
+    ]
+  },
+  {
+    "id": "dates",
+    "category": "forms",
+    "title": "Single date & two-month range calendar",
+    "bn": "একটি তারিখ ও দুই মাসের ক্যালেন্ডার",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/AppDateRangePicker.tsx"
+    ],
+    "states": [
+      "single date",
+      "range start/end",
+      "presets",
+      "clear",
+      "cancel",
+      "apply",
+      "keyboard",
+      "viewport flip"
+    ]
+  },
+  {
+    "id": "overlays",
+    "category": "overlays",
+    "title": "Bilingual help, More menu, modal & attachment",
+    "bn": "দুই ভাষার সহায়তা, আরও মেনু, ডায়ালগ ও ফাইল",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/Tooltip.tsx",
+      "src/components/reports/ReportGuidance.tsx",
+      "src/components/layout/FloatingPanel.tsx",
+      "src/components/Dialog.tsx",
+      "src/components/Switch.tsx"
+    ],
+    "states": [
+      "focus/touch/hover",
+      "English + Bangla divider",
+      "Escape",
+      "menu action",
+      "modal focus return",
+      "setting on/off"
+    ]
+  },
+  {
+    "id": "feedback",
+    "category": "future",
+    "title": "Empty, error, loading, permission & Advanced",
+    "bn": "ফাঁকা, ভুল, লোডিং, অনুমতি ও আরও সেটিংস",
+    "wide": false,
+    "status": "prepared",
+    "sources": [
+      "src/components/FeedbackState.tsx",
+      "src/components/products/fields/Disclosure.tsx"
+    ],
+    "states": [
+      "empty",
+      "no results",
+      "retry",
+      "loading",
+      "permission",
+      "reduced motion",
+      "advanced collapsed/expanded"
+    ]
+  },
+  {
+    "id": "uploads",
+    "category": "forms",
+    "title": "Photo selection, preview & removal",
+    "bn": "ছবি বাছাই, দেখা ও মুছে ফেলা",
+    "wide": false,
+    "status": "existing",
+    "sources": [
+      "src/components/products/PhotoUploader.tsx"
+    ],
+    "states": [
+      "choose",
+      "drag/drop",
+      "preview",
+      "remove",
+      "maximum files",
+      "local-only preview",
+      "legacy copy gap"
+    ]
+  },
+  {
+    "id": "settings",
+    "category": "forms",
+    "title": "Financial names, presets and whole-column order",
+    "bn": "হিসাবের নাম, সহায়ক লেখা ও কলামের অবস্থান",
+    "wide": true,
+    "status": "existing",
+    "sources": [
+      "src/settings/FinancialTerminologySettings.tsx",
+      "src/financial-display/model.ts",
+      "src/settings/ui.tsx",
+      "src/settings/SettingsTabs.tsx",
+      "src/hooks/useMediaQuery.ts",
+      "src/components/WorkspaceLibrary.tsx",
+      "src/components/WorkspaceToolbar.tsx",
+      "src/settings/EmployeeDirectory.tsx",
+      "src/settings/SettingsActivity.tsx",
+      "src/settings/SettingsSqlBackup.tsx"
+    ],
+    "states": [
+      "Accounting",
+      "Local party Khata",
+      "Custom labels",
+      "context isolation",
+      "sample ledger",
+      "search",
+      "reset",
+      "read-only through business editor",
+      "Party-aligned phone/tablet/desktop navigation",
+      "horizontal and vertical keyboard tabs",
+      "overflow-only tab scroll controls with disabled boundaries",
+      "header-owned global search and bounded results",
+      "draft retained during resize",
+      "Report Library sidebar search",
+      "employee joined-date filter and columns",
+      "encrypted SQL restore review",
+      "three invoice language styles"
+    ]
+  }
+]

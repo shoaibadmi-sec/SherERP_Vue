@@ -1,0 +1,192 @@
+name: PR Fast CI
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.superpowers/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality + targeted smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: 'true'
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Node 24 with npm download cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Detect impacted ERP modules
+        id: scope
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          changed="$RUNNER_TEMP/hisabiq-changed-files.txt"
+          if [[ -n "$BASE_SHA" && -n "$HEAD_SHA" ]]; then
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" > "$changed"
+          else
+            # Manual dispatch deliberately exercises the complete app.
+            git ls-files src scripts tests > "$changed"
+          fi
+          echo "Changed files:"
+          cat "$changed"
+
+          flag() {
+            local key="$1" pattern="$2"
+            if grep -Eq "$pattern" "$changed"; then
+              echo "$key=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$key=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          flag browser '^(src/|scripts/.*browser\.cjs$|\.github/workflows/pr-ci\.yml$)'
+          flag pos '^(src/(pages/Pos\.tsx|components/pos/|hooks/usePosCart\.ts|bundles/|installments/)|scripts/(pos-|bundle-).*browser\.cjs$)'
+          flag purchases '^(src/(pages/(Purchases|PurchaseEditor)\.tsx|components/purchases/|utils/purchaseSource\.ts)|scripts/(purchase-|product-quick-add).*browser\.cjs$)'
+          flag parties '^(src/(pages/(Parties|Party|Vendor|Vendors)\.tsx|components/(parties|vendor)/)|scripts/(party-|vendor-).*browser\.cjs$)'
+          flag finance '^(src/(pages/Finance\.tsx|components/finance/|utils/financePaymentDrafts\.ts)|scripts/(counter-|finance-).*browser\.cjs$)'
+          flag shared '^(src/(App\.tsx|index\.css|components/(Dialog|FormSelect|Input|NumericInput|MoneyUnitInput|Table\.tsx|layout/|transactions/)|motion/)|scripts/(dialog-accessibility|responsive-audit|mobile-carts|field-alignment|table-typography).*browser\.cjs$)'
+          flag mobile '^(src/index\.css$|src/components/(pos/CartTable|purchases/PurchaseCart|transactions/TransactionCartEditor)\.tsx$|scripts/mobile-carts-browser\.cjs$)'
+          flag reports '^(src/(pages/Reports\.tsx|reports/|components/reports/)|scripts/(report-workspace|report-guidance|reports-print)-browser\.cjs$)'
+          flag settings '^(src/(settings/|documents/|financial-display/|utils/(reportOutput|salesDocuments)\.tsx?$)|scripts/settings.*browser\.cjs$)'
+          flag auth '^(src/(features/auth/|App\.tsx$|components/(Input|AppSelect|Dialog)\.tsx$|theme\.css$)|scripts/auth-login-browser\.cjs$)'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript correctness
+        run: npx tsc --noEmit
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: UI design contract
+        run: npm run check:ui-contract
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Vite production build
+        run: npm run build
+
+      - name: Install Chromium only when necessary
+        if: steps.scope.outputs.browser == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Sales & Profit hybrid experiment responsive and interaction smoke
+        if: steps.scope.outputs.reports == 'true'
+        run: npm run test:sales-hybrid
+
+      - name: Upload hybrid experiment screenshots
+        if: always() && steps.scope.outputs.reports == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-profit-experiment-${{ github.sha }}
+          path: test-results/sales-hybrid/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Business Review monthly/yearly, bilingual, print and responsive smoke
+        if: steps.scope.outputs.reports == 'true'
+        run: npm run test:business-review
+
+      - name: Upload Business Review screenshots
+        if: always() && steps.scope.outputs.reports == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: business-review-${{ github.sha }}
+          path: test-results/business-review/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Magic Patterns Reports fidelity, route, interaction and responsive captures
+        if: steps.scope.outputs.reports == 'true'
+        run: npm run test:reports-magicpatterns
+
+      - name: Upload draft Reports screenshots and browser diagnostics
+        if: always() && steps.scope.outputs.reports == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-magicpatterns-${{ github.sha }}
+          path: test-results/reports-magicpatterns/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Application navigation smoke
+        if: steps.scope.outputs.browser == 'true'
+        run: node scripts/page-loading-browser.cjs
+
+      - name: Reports filters, output and purchase planning
+        if: steps.scope.outputs.reports == 'true'
+        run: |
+          npm run test:report-workspace
+          npm run test:report-guidance
+
+      - name: Login preview responsive and interaction smoke
+        if: steps.scope.outputs.auth == 'true'
+        run: npm run test:auth-login
+
+      - name: ERP rendered 36px component audit
+        if: steps.scope.outputs.browser == 'true' && contains(github.event.pull_request.title, '36px')
+        run: npm run test:field-size-parity
+
+      - name: Settings profiles, roles, recovery and responsive save flows
+        if: steps.scope.outputs.settings == 'true'
+        run: |
+          npm run test:settings-library
+          npm run test:settings-responsive
+          npm run test:settings-redesign
+          npm run test:settings
+
+      - name: POS fast checkout smoke
+        if: steps.scope.outputs.pos == 'true'
+        run: npm run test:pos-fast-counter
+
+      - name: Purchases workflow smoke
+        if: steps.scope.outputs.purchases == 'true'
+        run: npm run test:purchases
+
+      - name: Party directory and ledger smoke
+        if: steps.scope.outputs.parties == 'true'
+        run: npm run test:parties
+
+      - name: Finance counter smoke
+        if: steps.scope.outputs.finance == 'true'
+        run: npm run test:counter-ux
+
+      - name: Calculator multiline, keyboard and viewport smoke
+        if: steps.scope.outputs.shared == 'true'
+        run: npm run test:calculator-scratchpad
+
+      - name: Shared dialogs and mobile overlay accessibility
+        if: steps.scope.outputs.shared == 'true'
+        run: node scripts/dialog-accessibility-browser.cjs
+
+      - name: Products-standard table typography
+        if: steps.scope.outputs.shared == 'true'
+        run: npm run test:table-typography
+
+      - name: Compact phone and tablet cart smoke
+        if: steps.scope.outputs.mobile == 'true'
+        run: node scripts/mobile-carts-browser.cjs

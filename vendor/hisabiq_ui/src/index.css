@@ -1,0 +1,792 @@
+/* --- MANAGED FONT IMPORTS START (do not edit manually) --- */
+/* INTERNAL USE NAME: Heading */
+@import url('https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* INTERNAL USE NAME: Mono */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* --- MANAGED FONT IMPORTS END --- */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import './_designSystem/ds-6551b66a-cfd3-4df9-a9b1-9ead8d7fe7e9/index.css';
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import './theme.css';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+@layer base {
+  * {
+    @apply border-border outline-ring;
+  }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  /* A ledger tab can be taller than the viewport while another tab is short.
+     Likewise a modal hides body overflow. Reserve the same scrollbar gutter in
+     both states so the ERP header, tables and centred dialogs never jump sideways.
+     Overlay-scrollbar browsers (including most phones) reserve no extra width. */
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Geist', 'Hind Siliguri', system-ui, sans-serif;
+    font-feature-settings: 'tnum' 1;
+  }
+}
+@layer utilities {
+  .font-bn {
+    font-family: 'Hind Siliguri', 'Geist', system-ui, sans-serif;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--input);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .erp-tab-active {
+    box-shadow: inset 0 -2px 0 0 var(--primary);
+  }
+  /* Only the shared Framer underline draws selection in migrated ERP tabs. */
+  .motion-tab-list > [role="tab"] { position: relative; }
+  .motion-nav-row { position: relative; isolation: isolate; }
+
+}
+
+
+/* Personal density applies only to the business workspace. */
+.erp-workspace[data-density="Comfortable"] table td { padding-top: 0.9rem; padding-bottom: 0.9rem; }
+
+.erp-settings input[type="radio"]:focus-visible + span { outline: 2px solid var(--ring); outline-offset: 4px; }
+
+/* Isolate the selected party ledger in the browser's Print/Save as PDF dialog. */
+@media print {
+  html { scrollbar-gutter: auto; }
+  @page { size: A4 portrait; margin: 12mm; }
+  body * { visibility: hidden !important; }
+  #party-statement-print, #party-statement-print * { visibility: visible !important; }
+  #party-statement-print {
+    position: fixed !important; inset: 0 auto auto 0 !important;
+    width: 100% !important; max-width: 100% !important;
+    background: white !important; color: black !important;
+    border: 0 !important; box-shadow: none !important; padding: 0 !important;
+    overflow: visible !important;
+  }
+  #party-statement-print thead { display: table-header-group; }
+  #party-statement-print tr { break-inside: avoid; page-break-inside: avoid; }
+  #party-statement-print table { width: 100%; }
+}
+
+/* Forms stay reachable on phones, tablets and with the on-screen keyboard. */
+[data-dialog-root] { max-height: calc(100dvh - 2rem); overflow-y: auto; overscroll-behavior: contain; }
+/* Passive confirmations must never block the next Counter/POS click.
+   Keep action-bearing toasts interactive; passive notices remain readable
+   and do not capture clicks over underlying controls at any viewport. */
+[data-sonner-toast]:not(:has(button, a, input, select, textarea, [role="button"])) {
+  pointer-events: none;
+}
+/* HisabIQ control height is 36px on all screens and pointer types. Detailed
+   sizing is owned by the canonical control block below, not touch overrides. */
+
+/* ERP field centering: preserve natural left/right text alignment while aligning
+   legacy inline controls with their labels and adjoining action buttons. */
+:where(.erp-workspace, [data-dialog-root]) :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  button[role="combobox"]
+) { vertical-align: middle; }
+
+/* Joined inputs retain a single 36px outer shell and natural inner sizing.
+   Stepper arrow halves do not receive the standalone control height. */
+
+/* The same transaction controls become compact rows on phones and tablets. */
+[data-cart-field] { display: contents; }
+@media (max-width: 1279px) {
+  [data-cart-kind] [data-cart-header] { display: none; }
+  [data-cart-kind] [data-cart-row] {
+    min-width: 0; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 8px;
+    padding-top: 12px; padding-bottom: 12px;
+  }
+  [data-cart-row] > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  [data-cart-row] > :nth-child(2) { grid-column: 2 / 6; grid-row: 1; }
+  [data-cart-row] > :nth-child(3) { grid-column: 1 / 4; grid-row: 2; }
+  [data-cart-row] > :nth-child(4) { grid-column: 4 / 7; grid-row: 2; }
+  [data-cart-row] > :nth-child(5) { grid-column: 1 / 4; grid-row: 3; }
+  [data-cart-row] > :nth-child(6) { grid-column: 4 / 7; grid-row: 3; }
+  [data-cart-row="sale"] > :nth-child(7) { grid-column: 6; grid-row: 1; }
+  [data-cart-row="shared"] > :nth-child(2) { grid-column: 2 / 5; }
+  [data-cart-row="shared"] > :nth-child(7) { grid-column: 5 / 7; grid-row: 1; }
+  [data-cart-row="purchase"] > :nth-child(7) { grid-column: 1 / 7; grid-row: 4; }
+  [data-cart-row="purchase"] > :nth-child(8) { grid-column: 6; grid-row: 1; }
+  [data-cart-kind] [data-cart-row] > [data-cart-field] { display: block; min-width: 0; }
+  [data-cart-row] > [data-cart-field]::before {
+    content: attr(data-cart-field); display: block; margin-bottom: 4px;
+    font-size: 11px; font-weight: 500; color: var(--muted-foreground);
+  }
+  [data-cart-row] input, [data-cart-row] button { min-height: var(--erp-control-height); }
+  [data-cart-row] [data-testid="compound-quantity"], [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-row] [role="radiogroup"] { height: var(--erp-control-height); }
+  [data-cart-kind] [data-cart-add] { min-width: 0; grid-template-columns: 36px minmax(0, 1fr); }
+  [data-cart-add] > :nth-child(n+3) { display: none; }
+}
+
+/* Stable numeric geometry: show arrows without moving the value/caret on focus. */
+[data-numeric-input] {
+  vertical-align: middle;
+  box-sizing: border-box;
+  padding: 0 !important;
+  --numeric-step-space: 24px;
+}
+[data-numeric-input] > .numeric-input-control {
+  box-sizing: border-box;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  flex: 1 1 0% !important;
+  padding-right: calc(var(--numeric-inset, 0px) + var(--numeric-step-space)) !important;
+}
+[data-numeric-input][data-editable="false"] > .numeric-input-control {
+  padding-right: max(var(--numeric-inset, 0px), 10px) !important;
+}
+[data-numeric-input][data-stepper-size="compact"] { --numeric-step-space: 18px; }
+[data-number-stepper] {
+  right: calc(var(--numeric-inset, 0px) + 2px);
+  top: 50%;
+  width: 18px;
+  height: calc(100% - 4px);
+  transform: translateY(-50%);
+  opacity: 0;
+  pointer-events: none;
+}
+[data-numeric-input][data-stepper-size="compact"] [data-number-stepper] { width: 14px; }
+[data-numeric-input]:hover > [data-number-stepper],
+[data-numeric-input]:focus-within > [data-number-stepper] { pointer-events: auto; }
+[data-number-stepper] > button {
+  height: 50%;
+  min-height: 0 !important;
+  flex: 1 1 50%;
+  padding: 0;
+  line-height: 1;
+}
+[data-numeric-input]:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+[data-numeric-joined] [data-numeric-input] { border-width: 0; border-radius: 0; }
+[data-numeric-joined] [data-numeric-input].border-l { border-left-width: 1px; }
+[data-numeric-joined] [data-numeric-input]:focus-within { box-shadow: none; }
+.numeric-input-control[type=number] { appearance: textfield; }
+.numeric-input-control::-webkit-inner-spin-button,
+.numeric-input-control::-webkit-outer-spin-button { appearance: none; margin: 0; }
+@media (pointer: coarse) {
+  /* Keep inner stepper buttons half-height while the outer control is 36px. */
+  [data-number-stepper] { width: 20px; }
+}
+@media (max-width: 639px) {
+  /* Compact compound inputs have a full-width row on phones. */
+  [data-numeric-input][data-stepper-size="compact"] { --numeric-step-space: 26px; }
+  [data-numeric-input][data-stepper-size="compact"] [data-number-stepper] { width: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { [data-number-stepper] { transition: none; } }
+
+/* Keep both unit quantities readable when focus reveals the phone steppers. */
+@media (max-width: 639px) {
+  [data-cart-row][data-compound="true"] > :nth-child(3) { grid-column: 1 / 7; grid-row: 2; }
+  [data-cart-row][data-compound="true"] > :nth-child(4) { grid-column: 1 / 3; grid-row: 3; }
+  [data-cart-row][data-compound="true"] > :nth-child(5) { grid-column: 3 / 7; grid-row: 3; }
+  [data-cart-row="sale"][data-compound="true"] > :nth-child(6),
+  [data-cart-row="shared"][data-compound="true"] > :nth-child(6) { grid-column: 1 / 7; grid-row: 4; }
+  [data-cart-row="purchase"][data-compound="true"] > :nth-child(6) { grid-column: 1 / 4; grid-row: 4; }
+  [data-cart-row="purchase"][data-compound="true"] > :nth-child(7) { grid-column: 4 / 7; grid-row: 4; }
+}
+
+
+/* POS cart: container-aware desktop table, not the generic mobile transaction cards.
+   Breakpoints use actual available workspace/cart width, accounting for the ERP sidebar. */
+.pos-screen {
+  min-width: 0;
+  container: pos-screen / inline-size;
+}
+[data-pos-layout] { min-width: 0; }
+[data-cart-kind="sale"] {
+  min-width: 0;
+  container: pos-cart / inline-size;
+}
+[data-cart-kind="sale"] [data-cart-row],
+[data-cart-kind="sale"] [data-cart-header],
+[data-cart-kind="sale"] [data-cart-add] { min-width: 0 !important; }
+
+/* Two columns only when there is enough room for a real table beside checkout. */
+@container pos-screen (min-width: 1056px) {
+  [data-pos-layout] {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+  }
+  [data-pos-checkout] { position: sticky; top: 72px; align-self: start; }
+  [data-pos-checkout] [data-pos-customer-fields] { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Only show the full POS table when Price can fit at least ৳1,00,000 with its stepper and cost eye. */
+@container pos-cart (min-width: 760px) {
+  [data-cart-kind="sale"] [data-cart-header],
+  [data-cart-kind="sale"] [data-cart-row],
+  [data-cart-kind="sale"] [data-cart-add] {
+    grid-template-columns: 36px minmax(130px, 1fr) minmax(150px, 168px) minmax(78px, 92px) minmax(164px, 180px) minmax(108px, 130px) 28px;
+    gap: 6px;
+  }
+  [data-cart-kind="sale"] [data-cart-header] { display: grid; }
+  [data-cart-kind="sale"] [data-cart-row] { padding-top: 6px; padding-bottom: 6px; }
+  [data-cart-kind="sale"] [data-cart-row] > * { grid-column: auto; grid-row: auto; }
+  [data-cart-kind="sale"] [data-cart-row] > [data-cart-field] { display: contents; }
+  [data-cart-kind="sale"] [data-cart-row] > [data-cart-field]::before { content: none; }
+  [data-cart-kind="sale"] [data-cart-row] input,
+  [data-cart-kind="sale"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="sale"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="sale"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="sale"] [data-cart-row] [role="radiogroup"] { height: 36px; }
+  [data-cart-kind="sale"] [data-cart-add] > :nth-child(n) { display: revert; }
+}
+
+/* Narrow POS stays a dense table-like editor:
+   product/total on the first line, editable quantity/unit/price directly below. */
+@container pos-cart (max-width: 759px) {
+  [data-cart-kind="sale"] [data-cart-header] { display: none; }
+  [data-cart-kind="sale"] [data-cart-row] {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 5px 6px;
+    padding: 8px 10px;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > [data-cart-field] {
+    display: block;
+    min-width: 0;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > [data-cart-field]::before {
+    content: none;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(2) { grid-column: 2 / 9; grid-row: 1; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(3) { grid-column: 1 / 7; grid-row: 2; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(4) { grid-column: 7 / 10; grid-row: 2; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(5) { grid-column: 10 / 13; grid-row: 2; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(6) {
+    grid-column: 9 / 12;
+    grid-row: 1;
+    align-self: center;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(7) {
+    grid-column: 12;
+    grid-row: 1;
+    justify-self: end;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(3)::before,
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(4)::before,
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(5)::before {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted-foreground);
+    font-size: 10px;
+    line-height: 12px;
+    font-weight: 500;
+  }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(3)::before { content: "Qty"; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(4)::before { content: "Unit"; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(5)::before { content: "Price"; }
+  [data-cart-kind="sale"] [data-cart-row] input,
+  [data-cart-kind="sale"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="sale"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="sale"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="sale"] [data-cart-row] [role="radiogroup"] { height: var(--erp-control-height); }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(7) { width: 30px; height: 34px; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(4) [role="radiogroup"] { min-width: 0; }
+  [data-cart-kind="sale"] [data-cart-add] {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  [data-cart-kind="sale"] [data-cart-add] > :nth-child(n + 3) { display: none; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(2) p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* On phones, don't crush compound quantities or the price-eye icon into tiny cells. */
+@container pos-cart (max-width: 519px) {
+  [data-cart-kind="sale"] [data-cart-row] {
+    grid-template-rows: auto auto auto;
+    gap: 4px 6px;
+  }
+  /* A two-column position/handle cell prevents overlap on 320px phones. */
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(1) { grid-column: 1 / 3; grid-row: 1; justify-content: flex-start; gap: 0; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(1) span { font-size: 11px; }
+  [data-cart-kind="sale"] [data-cart-row] [data-testid="pos-drag-handle"] { width: 23px; height: 30px; min-height: 0; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(2) { grid-column: 3 / 8; grid-row: 1; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(6) { grid-column: 8 / 12; grid-row: 1; font-size: 11.5px; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(3) { grid-column: 1 / -1; grid-row: 2; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(4) { grid-column: 1 / 6; grid-row: 3; }
+  [data-cart-kind="sale"] [data-cart-row] > :nth-child(5) { grid-column: 6 / -1; grid-row: 3; }
+}
+
+
+/* The POS-approved responsive contract also covers Purchase and its shared
+   Quotations/Online Sales editor. Never size these grids from viewport alone:
+   dialogs, sidebars, embedded purchase flows, and tablet rotation change the
+   actual cart width independently of the window width. */
+.purchase-workspace { container: purchase-workspace / inline-size; min-width: 0; }
+[data-purchase-layout] { min-width: 0; }
+[data-cart-kind="purchase"] { container: purchase-cart / inline-size; min-width: 0; }
+[data-cart-kind="shared"] { container: shared-cart / inline-size; min-width: 0; }
+[data-cart-kind="purchase"] [data-cart-header],
+[data-cart-kind="purchase"] [data-cart-row],
+[data-cart-kind="purchase"] [data-cart-add],
+[data-cart-kind="shared"] [data-cart-header],
+[data-cart-kind="shared"] [data-cart-row],
+[data-cart-kind="shared"] [data-cart-add] { min-width: 0 !important; }
+
+/* Full Purchase cart and checkout sit side by side only when the 840px
+   table and 330px checkout panel both fit inside the purchase workspace. */
+@container purchase-workspace (min-width: 1220px) {
+  [data-purchase-layout] { grid-template-columns: minmax(0, 1fr) 330px; }
+  [data-purchase-checkout] { position: sticky; top: 72px; align-self: start; }
+}
+
+/* All desktop row restoration rules are scoped to their own cart container.
+   Other pages using table/card layouts are intentionally untouched. */
+@container purchase-cart (min-width: 840px) {
+  [data-cart-kind="purchase"] [data-cart-header],
+  [data-cart-kind="purchase"] [data-cart-row],
+  [data-cart-kind="purchase"] [data-cart-add] {
+    grid-template-columns: 24px minmax(144px, 1fr) 162px 78px 105px 112px 95px 28px;
+    gap: 6px;
+  }
+  [data-cart-kind="purchase"] [data-cart-header] { display: grid; }
+  [data-cart-kind="purchase"] [data-cart-row] { padding-top: 6px; padding-bottom: 6px; }
+  [data-cart-kind="purchase"] [data-cart-row] > * { grid-column: auto; grid-row: auto; }
+  [data-cart-kind="purchase"] [data-cart-row] > [data-cart-field] { display: contents; }
+  [data-cart-kind="purchase"] [data-cart-row] > [data-cart-field]::before { content: none; }
+  [data-cart-kind="purchase"] [data-cart-row] input,
+  [data-cart-kind="purchase"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="purchase"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="purchase"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="purchase"] [data-cart-row] [role="radiogroup"] { height: 36px; }
+  [data-cart-kind="purchase"] [data-cart-add] > :nth-child(n) { display: revert; }
+}
+@container shared-cart (min-width: 780px) {
+  [data-cart-kind="shared"] [data-cart-header],
+  [data-cart-kind="shared"] [data-cart-row],
+  [data-cart-kind="shared"] [data-cart-add] {
+    grid-template-columns: 34px minmax(135px, 1fr) 196px 88px 100px 90px 50px;
+    gap: 6px;
+  }
+  [data-cart-kind="shared"] [data-cart-header] { display: grid; }
+  [data-cart-kind="shared"] [data-cart-row] { padding-top: 6px; padding-bottom: 6px; }
+  [data-cart-kind="shared"] [data-cart-row] > * { grid-column: auto; grid-row: auto; }
+  [data-cart-kind="shared"] [data-cart-row] > [data-cart-field] { display: contents; }
+  [data-cart-kind="shared"] [data-cart-row] > [data-cart-field]::before { content: none; }
+  [data-cart-kind="shared"] [data-cart-row] input,
+  [data-cart-kind="shared"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="shared"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="shared"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="shared"] [data-cart-row] [role="radiogroup"] { height: 36px; }
+  [data-cart-kind="shared"] [data-cart-add] > :nth-child(n) { display: revert; }
+}
+
+/* When the purchase table cannot fit, keep a terse invoice-like row. Product,
+   total and remove stay together; quantity/unit/prices are inline underneath. */
+@container purchase-cart (max-width: 839px) {
+  [data-cart-kind="purchase"] [data-cart-header] { display: none; }
+  [data-cart-kind="purchase"] [data-cart-row] {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 10px;
+  }
+  [data-cart-kind="purchase"] [data-cart-row] > [data-cart-field] { display: block; min-width: 0; }
+  [data-cart-kind="purchase"] [data-cart-row] > [data-cart-field]::before { content: none; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(2) { grid-column: 2 / 9; grid-row: 1; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(3) { grid-column: 1 / 5; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(4) { grid-column: 5 / 7; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(5) { grid-column: 7 / 10; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(6) { grid-column: 10 / 13; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(7) {
+    grid-column: 9 / 12; grid-row: 1; text-align: right; white-space: nowrap;
+  }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(8) {
+    grid-column: 12; grid-row: 1; justify-self: end; width: 30px; height: 34px;
+  }
+  [data-cart-kind="purchase"] [data-cart-row] input,
+  [data-cart-kind="purchase"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="purchase"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="purchase"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="purchase"] [data-cart-row] [role="radiogroup"] { height: var(--erp-control-height); }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(n + 3):nth-child(-n + 6)::before {
+    display: block; margin-bottom: 3px; font-size: 10px; line-height: 12px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(3)::before { content: "Qty"; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(4)::before { content: "Unit"; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(5)::before { content: "Cost"; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(6)::before { content: "Lot sale"; }
+  [data-cart-kind="purchase"] [data-cart-add] {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px; padding: 8px 10px;
+  }
+  [data-cart-kind="purchase"] [data-cart-add] > :nth-child(n + 3) { display: none; }
+}
+@container purchase-cart (max-width: 619px) {
+  [data-cart-kind="purchase"] [data-cart-row] { grid-template-rows: auto auto auto; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(2) { grid-column: 3 / 8; grid-row: 1; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(3) { grid-column: 1 / 9; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(4) { grid-column: 9 / 13; grid-row: 2; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(5) { grid-column: 1 / 7; grid-row: 3; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(6) { grid-column: 7 / 13; grid-row: 3; }
+  [data-cart-kind="purchase"] [data-cart-row] > :nth-child(7) {
+    grid-column: 8 / 12; grid-row: 1; font-size: 11.5px;
+  }
+}
+
+/* Quotes and online orders use the same responsive row hierarchy. */
+@container shared-cart (max-width: 779px) {
+  [data-cart-kind="shared"] [data-cart-header] { display: none; }
+  [data-cart-kind="shared"] [data-cart-row] {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 10px;
+  }
+  [data-cart-kind="shared"] [data-cart-row] > [data-cart-field] { display: block; min-width: 0; }
+  [data-cart-kind="shared"] [data-cart-row] > [data-cart-field]::before { content: none; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(2) { grid-column: 2 / 8; grid-row: 1; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(3) { grid-column: 1 / 7; grid-row: 2; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(4) { grid-column: 7 / 10; grid-row: 2; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(5) { grid-column: 10 / 13; grid-row: 2; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(6) {
+    grid-column: 8 / 11; grid-row: 1; white-space: nowrap; text-align: right;
+  }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(7) {
+    grid-column: 11 / 13; grid-row: 1; justify-self: end;
+  }
+  [data-cart-kind="shared"] [data-cart-row] input,
+  [data-cart-kind="shared"] [data-cart-row] button { min-height: 0; }
+  [data-cart-kind="shared"] [data-cart-row] [data-testid="compound-quantity"],
+  [data-cart-kind="shared"] [data-cart-row] [data-testid="single-quantity"],
+  [data-cart-kind="shared"] [data-cart-row] [role="radiogroup"] { height: var(--erp-control-height); }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(n + 3):nth-child(-n + 5)::before {
+    display: block; margin-bottom: 3px; font-size: 10px; line-height: 12px;
+    color: var(--muted-foreground); font-weight: 500;
+  }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(3)::before { content: "Qty"; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(4)::before { content: "Unit"; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(5)::before { content: "Price"; }
+  [data-cart-kind="shared"] [data-cart-add] {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px; padding: 8px 10px;
+  }
+  [data-cart-kind="shared"] [data-cart-add] > :nth-child(n + 3) { display: none; }
+}
+@container shared-cart (max-width: 519px) {
+  [data-cart-kind="shared"] [data-cart-row] { grid-template-rows: auto auto auto; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(2) { grid-column: 3 / 8; grid-row: 1; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(3) { grid-column: 1 / 13; grid-row: 2; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(4) { grid-column: 1 / 6; grid-row: 3; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(5) { grid-column: 6 / 13; grid-row: 3; }
+  [data-cart-kind="shared"] [data-cart-row] > :nth-child(6) {
+    grid-column: 8 / 11; grid-row: 1; font-size: 11.5px;
+  }
+}
+
+/* Add Product uses the universal 36px field height on every device. */
+.product-form {
+  --ctl-h: var(--erp-control-height);
+  --ctl-fs: 14px;
+  --label-fs: 13px;
+  font-feature-settings: normal;
+}
+@media (max-width: 767px), (pointer: coarse) {
+  .product-form { --ctl-fs: 16px; --label-fs: 14px; }
+}
+.product-form [data-field-shell="money-unit"] { height: var(--ctl-h); }
+.product-form :not([data-numeric-joined]) > [data-numeric-input] { height: var(--ctl-h); }
+.product-form :not([data-numeric-input]) > input[data-slot="input"] { height: var(--ctl-h); }
+.product-form button[data-hisabiq-select]:not([data-hisabiq-compact]) { height: var(--ctl-h); }
+.product-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.product-form textarea,
+.product-form [data-numeric-joined] button[role="combobox"] { font-size: var(--ctl-fs); }
+/* Columns follow the form's real width (sidebar, rail, rotation), not the device. */
+.pf-container { container: pf / inline-size; }
+.pf-unit-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 12px; align-items: end; }
+.pf-unit-select { grid-column: 1; }
+.pf-unit-ratio { grid-column: 1 / -1; grid-row: 2; }
+.pf-unit-remove { grid-column: 2; grid-row: 1; }
+@container pf (min-width: 600px) {
+  .pf-unit-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px; }
+  .pf-unit-ratio { grid-column: 2; grid-row: 1; }
+  .pf-unit-remove { grid-column: 3; }
+}
+.pf-grid-2, .pf-grid-3, .pf-pair-money, .pf-pair-qty {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@container pf (min-width: 480px) {
+  .pf-pair-money, .pf-pair-qty { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container pf (min-width: 600px) {
+  .pf-grid-2, .pf-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pf-span-2 { grid-column: 1 / -1; }
+}
+@container pf (min-width: 780px) {
+  .pf-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+
+/* HisabIQ source brand hierarchy: 36px ordinary controls, 48px explicit
+   terminal transaction actions. Do not size generic primary buttons by color. */
+:root {
+  --erp-control-height: 36px;
+  --erp-workflow-action-height: 48px;
+  --erp-input-font-size: 13px;
+  --erp-input-line-height: 20px;
+  --erp-input-font-weight: 400;
+}
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+.hisabiq-button {
+  height: var(--erp-control-height) !important;
+  min-height: var(--erp-control-height) !important;
+  max-height: var(--erp-control-height);
+  border-radius: 0.625rem;
+  padding-inline: max(0.75rem, 10px);
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+/* Icon-only controls are also 36 x 36, regardless of legacy icon-xs/sm/lg. */
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+:is(.hisabiq-button[data-hisabiq-size^="icon"], button[data-slot="button"][data-size^="icon"]) {
+  width: var(--erp-control-height) !important;
+  min-width: var(--erp-control-height);
+  padding-inline: 0;
+}
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+.hisabiq-button:is([data-hisabiq-variant="outline"],[data-hisabiq-variant="secondary"]) {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+.hisabiq-button:is([data-hisabiq-variant="outline"],[data-hisabiq-variant="secondary"]):is(:hover,:focus-visible):not(:disabled) {
+  background-color: var(--card);
+  border-color: var(--teal-300);
+  box-shadow: 0 1px 4px rgb(var(--color-ink) / 0.06);
+}
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+:is(
+  input[data-slot="input"]:not(.numeric-input-control),
+  button[data-slot="button"],
+  button[role="combobox"],
+  [data-hisabiq-input],
+  button[data-hisabiq-select],
+  [data-hisabiq-numeric],
+  [data-hisabiq-field-shell],
+  select,
+  [data-ledger-filter-action],
+  [data-sales-column-trigger]
+) {
+  box-sizing: border-box;
+  height: var(--erp-control-height) !important;
+  min-height: var(--erp-control-height) !important;
+  max-height: var(--erp-control-height);
+}
+/* Native text fields used in older forms still share the same 36px baseline.
+   Leave checkboxes, radio buttons, multiline textarea, icon-only internal
+   controls, calculator keys and numeric stepper halves intact. */
+:where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+input:not([data-slot="input"]):not(.numeric-input-control):not([data-calculator-input]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not(:where([data-numeric-input] input, [data-numeric-joined] input, [data-cart-row] input)) {
+  box-sizing: border-box;
+  height: var(--erp-control-height);
+  min-height: var(--erp-control-height);
+}
+/* Explicit completion-action exception to BOTH global 36px button rules.
+   Keep the marker semantic; never generalize to teal/primary or lg buttons. */
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+:is(.hisabiq-button, button[data-slot="button"])[data-erp-workflow-action="complete"] {
+  height: var(--erp-workflow-action-height) !important;
+  min-height: var(--erp-workflow-action-height) !important;
+  max-height: var(--erp-workflow-action-height);
+  padding-inline: 1rem;
+}
+/* Dropdown list options keep the same 36px row rhythm. Native calendar
+   day buttons and numeric up/down halves are internal controls, not peers. */
+[data-hisabiq-select-menu] button[role="option"] {
+  height: var(--erp-control-height);
+  min-height: var(--erp-control-height);
+  max-height: var(--erp-control-height);
+}
+/* Joined amount/unit editors are a single 36px control, never two rings.
+   Icon-only stepper arrows remain halves of the parent's total height. */
+[data-numeric-joined] [data-hisabiq-numeric] { height: 100% !important; min-height: 0 !important; }
+[data-numeric-joined] button[data-hisabiq-select] { height: 100% !important; min-height: 0 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .hisabiq-button { transition: none; }
+}
+/* Shared input-field focus parity with the approved Magic Patterns design.
+   Visible standalone controls are 36px; joined shells own focus decoration. */
+:root:root :is(
+  [data-hisabiq-input],
+  [data-hisabiq-select]:not([data-hisabiq-compact]),
+  [data-hisabiq-numeric],
+  [data-hisabiq-field-shell],
+  :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"]) textarea
+) {
+  border-color: var(--border);
+  border-radius: 0.5rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+/* Real text input: focus on click and keyboard, with just one mint halo. */
+:root:root [data-hisabiq-input]:not([aria-invalid="true"]):is(:focus, :focus-visible),
+:root:root [data-hisabiq-select]:not([data-hisabiq-compact]):not([aria-invalid="true"]):not(:where([data-numeric-joined] [data-hisabiq-select])):is(:focus, :focus-visible, [aria-expanded="true"]),
+:root:root [data-hisabiq-numeric]:not(:where([data-numeric-joined] [data-hisabiq-numeric])):focus-within:not(:has([aria-invalid="true"])),
+:root:root [data-hisabiq-field-shell]:focus-within:not([data-invalid="true"]),
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"]) textarea:not([aria-invalid="true"]):is(:focus, :focus-visible) {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgb(var(--color-teal-100) / 0.95);
+}
+/* Preserve errors and the selected state, not a misleading success-colored ring. */
+:root:root :is(
+  [data-hisabiq-input],
+  [data-hisabiq-select],
+  [data-hisabiq-numeric],
+  :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"]) textarea
+)[aria-invalid="true"],
+:root:root [data-hisabiq-field-shell][data-invalid="true"],
+:root:root [data-hisabiq-numeric]:has([aria-invalid="true"]) {
+  border-color: var(--destructive);
+}
+:root:root :is([data-hisabiq-input], [data-hisabiq-select])[aria-invalid="true"]:is(:focus, :focus-visible),
+:root:root [data-hisabiq-numeric]:has([aria-invalid="true"]):focus-within,
+:root:root [data-hisabiq-field-shell][data-invalid="true"]:focus-within,
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"]) textarea[aria-invalid="true"]:is(:focus, :focus-visible) {
+  outline: none;
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px rgb(var(--color-danger) / 0.16);
+}
+/* Legacy native text fields share the same focus language without
+   changing their sizes or the geometry of carts, calculators and joined inputs. */
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not(.numeric-input-control):not([data-hisabiq-input]):not([data-calculator-input]):not(:where([data-numeric-input] input, [data-numeric-joined] input, [data-cart-row] input, [data-slot="input-group"] input)):is(:focus, :focus-visible) {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgb(var(--color-teal-100) / 0.95);
+}
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not(.numeric-input-control):not([data-hisabiq-input]):not([data-calculator-input]):not(:where([data-numeric-input] input, [data-numeric-joined] input, [data-cart-row] input, [data-slot="input-group"] input))[aria-invalid="true"]:is(:focus, :focus-visible) {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px rgb(var(--color-danger) / 0.16);
+}
+/* Some legacy forms still use a native select instead of FormSelect. */
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+  select:not(:where([data-numeric-joined] select, [data-cart-row] select)):is(:focus, :focus-visible) {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgb(var(--color-teal-100) / 0.95);
+}
+:root:root :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+  select[aria-invalid="true"]:is(:focus, :focus-visible) {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px rgb(var(--color-danger) / 0.16);
+}
+/* One amount/unit shell owns the focus treatment; nested editors do not
+   add a second ring or alter the combined field's square internal corners. */
+:root:root [data-numeric-joined] [data-hisabiq-numeric],
+:root:root [data-numeric-joined] [data-hisabiq-select] {
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+}
+:root:root [data-hisabiq-select][data-hisabiq-compact] {
+  border-color: transparent;
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is([data-hisabiq-input], [data-hisabiq-select], [data-hisabiq-numeric], [data-hisabiq-field-shell]) {
+    transition: none;
+  }
+}
+
+/* Products is the approved typography reference for every data table and its
+   responsive rows. Roles win over legacy page-local size utilities. */
+:root {
+  --erp-table-data-size: 13px;
+  --erp-table-heading-size: 12px;
+  --erp-table-helper-size: 11px;
+}
+:root:root:root :is([data-erp-table], [data-erp-table-view], [data-cart-row]) {
+  font-size: var(--erp-table-data-size);
+  line-height: 20px;
+  font-feature-settings: normal;
+  font-variant-numeric: normal;
+}
+:root:root:root :is([data-erp-table], [data-erp-table-view], [data-cart-row], [data-cart-header]) :where(*) {
+  font-size: inherit;
+  line-height: inherit;
+  font-feature-settings: inherit;
+  font-variant-numeric: inherit;
+}
+:root:root:root [data-erp-table] :is(th),
+:root:root:root [data-cart-header] {
+  font-size: var(--erp-table-heading-size);
+  line-height: 16px;
+}
+:root:root:root [data-cart-row] [data-cart-field]::before {
+  font-size: var(--erp-table-heading-size);
+  line-height: 16px;
+}
+:root:root:root :is([data-erp-table], [data-erp-table-view], [data-cart-row], [data-cart-header])
+  :is([data-table-helper], [data-table-badge], [data-bangla-helper], [data-slot="badge"]) {
+  font-size: var(--erp-table-helper-size);
+  line-height: 16px;
+}
+
+/* Entry values stay quieter than labels and totals, including inside medium
+   labels and joined numeric controls. The calculator owns its text scale. */
+:root:root:root :is(
+  [data-hisabiq-input],
+  [data-hisabiq-numeric],
+  .numeric-input-control,
+  :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+    :is(input:not([data-calculator-input]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]), textarea)
+) {
+  font-size: var(--erp-input-font-size);
+  line-height: var(--erp-input-line-height);
+  font-weight: var(--erp-input-font-weight);
+  letter-spacing: normal;
+  color: rgb(var(--color-ink-600));
+  font-feature-settings: normal;
+  font-variant-numeric: normal;
+}
+:root:root:root :is(
+  [data-hisabiq-input],
+  .numeric-input-control,
+  :where(.erp-workspace, [data-dialog-root], .erp-settings, .hisabiq-app, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [role="dialog"])
+    :is(input:not([data-calculator-input]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]), textarea)
+)::placeholder {
+  color: rgb(var(--color-muted-foreground));
+  font-weight: var(--erp-input-font-weight);
+  opacity: 1;
+}

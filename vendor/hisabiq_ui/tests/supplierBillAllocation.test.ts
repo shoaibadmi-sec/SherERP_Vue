@@ -1,0 +1,45 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {counterOpenInvoices,counterAllocateOldest} from '../src/utils/counterAllocation.ts';
+import {businessToday} from '../src/utils/dateRange.ts';
+import {dispatchPartyPreview,getPartyPreviewSnapshot,resetPartyPreviewForTest} from '../src/data/partyPreviewStore.ts';
+import {supplierSettlementAsOf} from '../src/utils/partySettlement.ts';
+import type {PartyPaymentPayload} from '../src/types/partyLedger.ts';
+const date=businessToday();
+const pay=(invoiceId:string,amount:number,operationId:string):PartyPaymentPayload=>({partyId:'s1',relationship:'Supplier',date,amount,invoiceId,operationId,splits:[{id:'cash',method:'Cash',accountId:'acc-cash',amount}]});
+test('supplier bills expose exact remaining dues and targeted payments consume only their source',()=>{
+ resetPartyPreviewForTest();const initial=getPartyPreviewSnapshot();
+ const bills=counterOpenInvoices(initial.sources,'s1',date,'Supplier');assert.ok(bills.length>=2);
+ assert.equal(bills.reduce((sum,bill)=>sum+bill.due,0),supplierSettlementAsOf(initial.sources,'s1',date).invoiceDue);
+ const bill=bills[1],amount=100;
+ const next=dispatchPartyPreview({type:'record-payment',payload:pay(bill.id,amount,'targeted-supplier-partial')});
+ assert.equal(next.sources.at(-1)?.invoiceId,bill.id);
+ const remaining=counterOpenInvoices(next.sources,'s1',date,'Supplier');
+ assert.equal(remaining.find(item=>item.id===bill.id)?.due,bill.due-amount);
+ assert.equal(remaining.find(item=>item.id===bills[0].id)?.due,bills[0].due);
+ assert.ok(counterAllocateOldest(remaining,101).every(item=>item.amount>0));
+ dispatchPartyPreview({type:'record-payment',payload:pay(bill.id,bill.due-amount,'targeted-supplier-close')});
+ const closed=getPartyPreviewSnapshot();
+ assert.throws(()=>dispatchPartyPreview({type:'record-payment',payload:pay(bill.id,1,'targeted-supplier-stale')}),/outstanding due/i);
+ assert.strictEqual(getPartyPreviewSnapshot(),closed);
+});
+test('supplier targeted overpayment, unrelated identity and over-discount fail atomically',()=>{
+ resetPartyPreviewForTest();const before=getPartyPreviewSnapshot();
+ const bills=counterOpenInvoices(before.sources,'s1',date,'Supplier');const bill=bills.filter(item=>!item.opening).sort((a,b)=>a.due-b.due)[0];
+ assert.throws(()=>dispatchPartyPreview({type:'record-payment',payload:pay(bill.id,bill.due+1,'targeted-supplier-over')}),/outstanding due/i);
+ assert.strictEqual(getPartyPreviewSnapshot(),before);
+ assert.throws(()=>dispatchPartyPreview({type:'record-payment',payload:pay('sale:s241',1,'targeted-supplier-unrelated')}),/reference|belong/i);
+ assert.strictEqual(getPartyPreviewSnapshot(),before);
+ assert.throws(()=>dispatchPartyPreview({type:'record-payment',payload:{...pay(bill.id,bill.due,'targeted-supplier-rebate'),discount:1,reason:'Settlement'}}),/outstanding due/i);
+ assert.strictEqual(getPartyPreviewSnapshot(),before);
+});
+test('supplier payment edits validate the selected bill after excluding their original payment',()=>{
+ resetPartyPreviewForTest();
+ const bill=counterOpenInvoices(getPartyPreviewSnapshot().sources,'s1',date,'Supplier').find(item=>!item.opening);assert.ok(bill);
+ const created=dispatchPartyPreview({type:'record-payment',payload:pay(bill.id,100,'supplier-edit-source')});
+ const source=created.sources.at(-1);assert.ok(source);const sourceId=source.id;
+ const corrected=dispatchPartyPreview({type:'edit-source-payment',sourceId,reason:'Correct selected bill amount',payload:pay(bill.id,200,'supplier-edit-source')});
+ assert.equal(counterOpenInvoices(corrected.sources,'s1',date,'Supplier').find(item=>item.id===bill.id)?.due,bill.due-200);
+ assert.throws(()=>dispatchPartyPreview({type:'edit-source-payment',sourceId,reason:'Invalid oversized correction',payload:pay(bill.id,bill.due+1,'supplier-edit-source')}),/outstanding due/i);
+ assert.strictEqual(getPartyPreviewSnapshot(),corrected);
+});

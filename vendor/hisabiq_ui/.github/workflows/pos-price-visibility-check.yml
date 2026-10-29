@@ -1,0 +1,22 @@
+name: POS Price Visibility Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  visible-price:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx playwright install --with-deps chromium
+      - name: Check six-figure POS prices and eye buttons across widths
+        run: node scripts/pos-price-visibility-browser.cjs
+      - name: Check cart layouts across phone tablet laptop desktop
+        run: node scripts/pos-responsive-cart-browser.cjs

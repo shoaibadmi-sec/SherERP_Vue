@@ -1,0 +1,69 @@
+/* Only phone layouts change. Existing tablet/desktop markup and design remain authoritative. */
+@media (max-width: 767px) {
+  .sales-mobile-page { min-width: 0; }
+  .sales-mobile-page > .sales-mobile-header + * { margin-top: 10px; }
+  .sales-mobile-header > div { align-items: center; flex-wrap: nowrap; gap: 8px; }
+  .sales-mobile-header h1 { font-size: 18px; }
+  .sales-mobile-header > div > div:first-child > p { display: none; }
+  .sales-mobile-header > div > div:first-child > div { flex-wrap: wrap; gap: 2px 6px; }
+  .sales-mobile-header > div > div:last-child { flex-shrink: 0; gap: 4px; }
+  .sales-mobile-header .font-bn { font-size: 12px; }
+  .sales-mobile-summary .font-bn { font-family: inherit; }
+  .sales-mobile-page [role="tablist"] { flex-wrap: nowrap; overflow-x: auto; padding-inline: 2px; }
+  .sales-mobile-page [role="tablist"] > button { min-height: 36px; flex-shrink: 0; font-size: 13px; padding: 8px 10px; }
+  .sales-mobile-page [role="tablist"] > button > .font-bn { display: none; }
+  .sales-mobile-invoice-footer { display: none; }
+  .sales-mobile-toolbar input { height: 36px; min-width: 0; }
+  .sales-mobile-filter-fields > * { width: 100%; min-width: 0; }
+  .sales-mobile-tools > button,
+  .sales-mobile-tools > div > button { width: 100%; justify-content: flex-start; min-height: 36px; }
+  .sales-mobile-record-actions > div > button,
+  .sales-mobile-record-actions > button { min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+  .sales-mobile-record-compact .sales-mobile-record-body { padding-top: 6px; padding-bottom: 0; }
+  .sales-mobile-record-compact .sales-mobile-record-footer { padding-bottom: 0; }
+  .sales-mobile-record-compact .sales-mobile-customer-row { margin-top: 0; line-height: 18px; }
+  .sales-mobile-record-compact .sales-mobile-customer-name { min-height: 0; padding: 0; font-size: 13px; line-height: 18px; font-weight: 400; }
+  .sales-mobile-record-compact .sales-mobile-totals { margin-top: 2px; }
+  .sales-mobile-record-compact details { padding-bottom: 0; }
+  .sales-mobile-record-compact summary { min-height: 32px; }
+  .sales-mobile-record-compact .sales-mobile-record-actions { line-height: 0; }
+  .sales-mobile-record-compact .sales-mobile-record-actions > div { display: block; }
+  .sales-mobile-record-compact .sales-mobile-record-actions > div > button { min-width: 36px; min-height: 36px; padding: 6px; }
+  .sales-mobile-record :where(p, span) { overflow-wrap: anywhere; }
+  .sales-mobile-record strong { font-size: 14px; font-weight: 600; }
+  .sales-mobile-return-workspace { gap: 12px; padding: 12px; }
+  .sales-mobile-return-workspace > div { min-width: 0; }
+  .sales-mobile-disclosure > div > div { border-radius: 0; box-shadow: none; }
+  .sales-mobile-return-lines { border: 0; border-radius: 0; }
+  .sales-mobile-return-lines > div:first-child { padding-inline: 0; }
+  .sales-mobile-return-table { display: block; width: 100%; min-width: 0; white-space: normal; }
+  .sales-mobile-return-table thead { display: none; }
+  .sales-mobile-return-table tbody { display: block; }
+  .sales-mobile-return-table tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 12px; padding-block: 12px; }
+  .sales-mobile-return-table td { display: block; min-width: 0; padding: 0; white-space: normal; text-align: left; }
+  .sales-mobile-return-table td:first-child { grid-column: 1 / -1; }
+  .sales-mobile-return-table td:nth-child(3) { grid-column: 1; }
+  .sales-mobile-return-table td:nth-child(4) { grid-column: 2; grid-row: 3; }
+  .sales-mobile-return-table td[data-mobile-label]::before { content: attr(data-mobile-label); display: block; margin-bottom: 4px; font-size: 12px; color: var(--muted-foreground); }
+  .sales-mobile-return-table td:last-child > div { margin: 0; width: 100%; }
+  .sales-mobile-return-table td:first-child > div { max-width: none; }
+  .sales-mobile-return-table input { min-width: 0; height: 36px; }
+  .sales-mobile-drafts { gap: 16px; padding: 12px; }
+  .sales-mobile-drafts > section { border: 0; border-radius: 0; }
+  .sales-mobile-drafts > section > div:first-child { padding: 0 0 8px; }
+  .sales-mobile-drafts > section > div:first-child p + p { display: none; }
+  .sales-mobile-drafts .divide-y > div { padding: 12px 0; }
+  .sales-mobile-drafts .divide-y > div > div:first-child { flex-wrap: wrap; gap: 4px 8px; }
+  .sales-mobile-drafts .divide-y > div > div:first-child > div { min-width: 0; flex: 1 1 180px; }
+  .sales-mobile-drafts .divide-y > div > div:first-child > span { overflow-wrap: anywhere; }
+  .sales-mobile-drafts .mt-3 { margin-top: 8px; }
+  .sales-mobile-drafts button { min-height: 36px; }
+  .sales-mobile-dialog { max-width: calc(100vw - 16px); max-height: calc(100dvh - 24px); overflow-y: auto; padding: 16px; }
+  .sales-mobile-dialog :where(input:not([type="checkbox"]):not([type="radio"]), textarea) { min-width: 0; }
+  .sales-mobile-dialog table { white-space: normal; }
+  .sales-mobile-dialog th, .sales-mobile-dialog td { padding-inline: 6px; }
+  .sales-mobile-dialog .min-w-0 { min-width: 0; }
+  .sales-mobile-online-records { gap: 0; margin-inline: -12px; }
+  .sales-mobile-online-body { padding-block: 0; }
+  .sales-mobile-quote-records { min-width: 0; }
+}

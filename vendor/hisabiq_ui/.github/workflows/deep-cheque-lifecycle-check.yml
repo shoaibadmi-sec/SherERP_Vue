@@ -1,0 +1,26 @@
+name: Deep Cheque Lifecycle Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/deep-cheque-lifecycle-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deep-cheque-lifecycle-evidence
+          path: .superpowers/deep-audit/cheque-lifecycle
+          include-hidden-files: true
+          if-no-files-found: error

@@ -1,0 +1,32 @@
+name: Deep Finance Validation Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Transfer touch preflight at 360px
+        run: node scripts/deep-finance-validation-browser.cjs
+        env:
+          DEEP_AUDIT_WIDTH: '360'
+          DEEP_AUDIT_CASE: transfer
+          DEEP_AUDIT_OUTPUT: .superpowers/deep-audit/finance-validation/transfer-preflight
+      - run: node scripts/deep-finance-validation-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deep-finance-validation-evidence
+          path: .superpowers/deep-audit/finance-validation
+          include-hidden-files: true
+          if-no-files-found: error

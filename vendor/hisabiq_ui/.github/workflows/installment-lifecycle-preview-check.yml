@@ -1,0 +1,35 @@
+name: Installment Lifecycle Preview Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm ci
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Full unit suite
+        run: npm test
+      - name: ERP UI contract
+        run: npm run check:ui-contract
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Browser setup
+        run: npx playwright install --with-deps chromium
+      - name: POS preview
+        run: node scripts/installment-pos-browser.cjs
+      - name: Existing collection regression
+        run: node scripts/installment-payment-browser.cjs
+      - name: Lifecycle, dialogs and mobile
+        run: node scripts/installment-lifecycle-browser.cjs

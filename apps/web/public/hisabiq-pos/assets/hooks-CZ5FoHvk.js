@@ -1,0 +1,1 @@
+import{u as c,l as o,c as u}from"./index-BlwcL881.js";function p(e,n){const{state:s,actor:r}=c(),[t]=o();return e.filter(a=>u(s,r,n,a.tenantId)&&(!t.get("tenant")||t.get("tenant")===a.tenantId))}export{p as u};

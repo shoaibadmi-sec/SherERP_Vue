@@ -1,0 +1,39 @@
+name: Responsive UX Check
+# Extended regression check; run manually from Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  responsive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/responsive-audit-browser.cjs
+      - run: node scripts/dialog-accessibility-browser.cjs
+      - name: Phase 28 three-language accessibility and device sweep
+        run: npm run test:phase28-responsive-a11y
+        env:
+          PHASE28_AUDIT_OUTPUT: .superpowers/phase28/accessibility-audit.json
+      - name: Save Phase 28 accessibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase28-language-responsive-a11y
+          path: .superpowers/phase28/accessibility-audit.json
+          if-no-files-found: warn
+      - name: Phase 29 full Bangla visible-label census
+        run: npm run test:phase29-bangla-census
+        env:
+          PHASE29_CENSUS_OUTPUT: .superpowers/phase29/bangla-label-candidates.json
+      - name: Upload Phase 29 untranslated-label candidate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase29-bangla-label-census
+          path: .superpowers/phase29/bangla-label-candidates.json
+          if-no-files-found: warn

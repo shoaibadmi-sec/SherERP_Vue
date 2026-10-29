@@ -18,12 +18,14 @@ const route = useRoute();
 const insideShell = computed(
   () => typeof route.name !== 'string' || !PUBLIC_ROUTES.has(route.name),
 );
+// React owns its full original shell for a pixel-identical POS. No second Vue shell.
+const originalReactPos = computed(() => route.name === 'pos');
 </script>
 
 <template>
   <Toast />
   <ConfirmDialog />
-  <AppLayout v-if="insideShell" />
+  <AppLayout v-if="insideShell && !originalReactPos" />
   <RouterView v-else />
   <!--
     Phase 12.1 (owner decision 2026-08-31): a new build waits and offers itself,

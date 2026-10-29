@@ -20,7 +20,8 @@ export interface Violation {
   readonly detail: string;
 }
 
-const SKIPPED_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '__fixtures__']);
+// Vendored HisabIQ React source is upstream-owned, not SherERP application-domain code.
+const SKIPPED_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '__fixtures__', 'vendor']);
 
 /** Collects every .ts file under `root`, ignoring build output and fixtures. */
 function collectSourceFiles(root: string, dir: string, found: string[]): string[] {

@@ -1,0 +1,1 @@
+import{bF as t,dX as c,dY as u,dZ as r}from"./index-BlwcL881.js";function m(n,i){const{state:e,personal:l}=t(),a=e.sections.financialTerminology;return{text:(s,o)=>r(a,n,s,o,i??l.language),columns:u(a,n),label:s=>c(a,n,s,i??l.language),display:a}}export{m as u};
