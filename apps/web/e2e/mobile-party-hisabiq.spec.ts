@@ -20,10 +20,10 @@ async function phoneScreenshot(page: Page, testInfo: TestInfo, label: string): P
   await page.screenshot({ path: testInfo.outputPath(`${label}.png`), fullPage: true, animations: 'disabled' });
   const preview = await page.screenshot({ type: 'jpeg', quality: 38, scale: 'css', animations: 'disabled' });
   const encoded = preview.toString('base64');
-  console.log(`PARTY_PREVIEW_BEGIN ${label}`);
+  process.stdout.write(`PARTY_PREVIEW_BEGIN ${label}\n`);
   for (let i = 0; i < encoded.length; i += 4000)
-    console.log(`PARTY_PREVIEW_CHUNK ${label} ${encoded.slice(i, i + 4000)}`);
-  console.log(`PARTY_PREVIEW_END ${label}`);
+    process.stdout.write(`PARTY_PREVIEW_CHUNK ${label} ${encoded.slice(i, i + 4000)}\n`);
+  process.stdout.write(`PARTY_PREVIEW_END ${label}\n`);
 }
 
 test('Party directory remains simple and navigable on a phone', async ({ page }, testInfo: TestInfo) => {
