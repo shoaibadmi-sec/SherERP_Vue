@@ -57,7 +57,7 @@ test('desktop Party workspace retains two aligned panels and legible ledger', as
   await page.goto('/parties?role=CUSTOMER');
   await expect(page.getByRole('region', { name: /E2E Customer ledger/i })).toBeVisible();
   await expect(page.getByRole('region', { name: /E2E Customer ledger/i })
-    .getByRole('row', { name: /Opening balance/i })).toBeVisible();
+    .getByRole('row', { name: /Opening balance/i }).first()).toBeVisible();
   await noHorizontalPageOverflow(page);
 
   const layout = await page.evaluate(() => {
