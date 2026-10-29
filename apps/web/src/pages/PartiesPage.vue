@@ -305,7 +305,7 @@ async function load(): Promise<void> {
     summary.value = page.summary;
     nextCursor.value = page.page.nextCursor;
     if (selectedPartyId.value === null && typeof window !== 'undefined' &&
-        window.matchMedia('(min-width: 64rem)').matches) {
+        typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 64rem)').matches) {
       selectedPartyId.value = parties.value[0]?.id ?? null;
     }
   } catch (cause) {
@@ -354,7 +354,7 @@ watch(() => route.query.role, (value) => {
 });
 watch(() => route.query.id, (id) => {
   if (typeof id === 'string') selectedPartyId.value = id;
-  else if (typeof window !== 'undefined' && !window.matchMedia('(min-width: 64rem)').matches)
+  else if (typeof window !== 'undefined' && (typeof window.matchMedia !== 'function' || !window.matchMedia('(min-width: 64rem)').matches))
     selectedPartyId.value = null;
 });
 
@@ -744,7 +744,7 @@ async function removeGroup(id: string, name: string): Promise<void> {
           </div>
         </section>
 
-        <section class="party-detail" aria-label="Selected party ledger">
+        <section class="party-detail" :aria-label="selectedParty ? `${selectedParty.name} ledger` : 'Selected party ledger'">
           <button v-if="selectedPartyId" type="button" class="party-mobile-back"
             @click="leaveParty">
             <i class="pi pi-arrow-left" aria-hidden="true" /> All people <span class="sher-bn">সব পার্টি</span>
@@ -1591,6 +1591,10 @@ tbody tr.is-inactive td:not(.actions) {
 .party-directory-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sher-text-muted); font-size: var(--sher-text-xs); }
 .party-directory-money { text-align: right; font-size: var(--sher-text-xs); font-weight: 600; white-space: nowrap; }
 .party-directory-money.balance-settled { color: var(--sher-text-muted); }
+.party-workspace :deep(.num), .party-workspace :deep(.mono) {
+  font-variant-numeric: normal;
+  font-family: var(--sher-font);
+}
 .party-directory-more { padding: var(--sher-space-3); display: flex; justify-content: center; }
 .party-detail { padding: var(--sher-space-3); }
 .party-detail-empty {
