@@ -87,7 +87,7 @@ test.describe('the screens a shopkeeper looks at all day', () => {
           ...DYNAMIC.map((selector) => page.locator(selector)),
           // Invoice and daybook rows display the live business date as text,
           // outside the global header. Mask only exact ISO date leaves.
-          page.getByText(/^\\d{4}-\\d{2}-\\d{2}$/),
+          page.getByText(/^\d{4}-\d{2}-\d{2}$/),
         ],
         // Antialiasing differs between machines; a moved control does not.
         maxDiffPixelRatio: 0.02,
