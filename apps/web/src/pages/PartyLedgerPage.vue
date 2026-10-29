@@ -477,7 +477,7 @@ watch([partyId, role], () => {
       <nav class="party-ledger-tabs no-print" aria-label="Party ledger sections">
         <button v-for="tab in activityTabs" :key="tab.id" type="button"
           class="party-ledger-tab" :class="{ 'is-active': activityTab === tab.id }"
-          :aria-current="activityTab === tab.id ? 'page' : undefined" @click="activityTab = tab.id">
+          :aria-current="activityTab === tab.id ? 'page' : 'false'" @click="activityTab = tab.id">
           {{ tab.label }} <span class="sher-bn">{{ tab.bn }}</span>
         </button>
       </nav>
