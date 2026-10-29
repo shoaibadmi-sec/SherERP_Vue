@@ -56,6 +56,9 @@ const SCREENS: readonly { readonly name: string; readonly route: string }[] = [
  */
 const DYNAMIC = [
   '[data-testid="business-date"]',
+  // The global header shows today's Dhaka business date on every page.
+  // Keeping this unmasked would make all six visual tests fail at midnight.
+  '.bizdate-value',
   '.day-status-chip',
   '.sher-clock',
   'time',
@@ -80,7 +83,12 @@ test.describe('the screens a shopkeeper looks at all day', () => {
 
       await expect(page).toHaveScreenshot(`${screen.name}.png`, {
         fullPage: true,
-        mask: DYNAMIC.map((selector) => page.locator(selector)),
+        mask: [
+          ...DYNAMIC.map((selector) => page.locator(selector)),
+          // Invoice and daybook rows display the live business date as text,
+          // outside the global header. Mask only exact ISO date leaves.
+          page.getByText(/^\\d{4}-\\d{2}-\\d{2}$/),
+        ],
         // Antialiasing differs between machines; a moved control does not.
         maxDiffPixelRatio: 0.02,
         animations: 'disabled',
