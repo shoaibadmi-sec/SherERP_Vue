@@ -166,6 +166,8 @@ describe('ImportPage', () => {
   });
 
   it("shows the server's own code and message when the import is refused (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     commit.mockRejectedValue(
       new ApiError('VALIDATION_FAILED', 'Nothing was imported: row 3 (invalid)', 400),
     );
