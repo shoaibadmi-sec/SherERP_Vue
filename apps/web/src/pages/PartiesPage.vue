@@ -426,6 +426,9 @@ function isOutstanding(direction: string): boolean {
 function balanceClass(party: PartyResponse): string {
   const { direction } = party.balance;
   if (direction === 'SETTLED') return 'balance-settled';
+  // Multi-role people share one net journal regardless of the directory's role.
+  if (party.roles.length > 1) return direction === 'RECEIVABLE'
+    ? 'balance-advance' : 'balance-due';
   return isOutstanding(direction) ? 'balance-due' : 'balance-advance';
 }
 
