@@ -13,7 +13,7 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
 import Select from 'primevue/select';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { ApiError } from '../api/client';
@@ -158,6 +158,14 @@ const nextCursor = ref<string | null>(null);
 const ANY = 'any';
 
 const search = ref('');
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let requestSerial = 0;
+watch(search, () => {
+  if (workspaceMode.value !== 'WORKSPACE') return;
+  if (searchTimer !== null) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { void load(); }, 180);
+});
+onBeforeUnmount(() => { if (searchTimer !== null) clearTimeout(searchTimer); });
 const groupId = ref(ANY);
 const status = ref(ANY);
 const statusOptions = [
@@ -297,10 +305,12 @@ function sortBy(column: string): void {
 }
 
 async function load(): Promise<void> {
+  const requested = ++requestSerial;
   loading.value = true;
   loadError.value = null;
   try {
     const page = await fetchParties(session.accessToken.value ?? '', currentQuery());
+    if (requested !== requestSerial) return;
     parties.value = [...page.data];
     summary.value = page.summary;
     nextCursor.value = page.page.nextCursor;
@@ -309,9 +319,9 @@ async function load(): Promise<void> {
       selectedPartyId.value = parties.value[0]?.id ?? null;
     }
   } catch (cause) {
-    loadError.value = describe(cause);
+    if (requested === requestSerial) loadError.value = describe(cause);
   } finally {
-    loading.value = false;
+    if (requested === requestSerial) loading.value = false;
   }
 }
 
@@ -359,6 +369,7 @@ watch(() => route.query.id, (id) => {
 });
 
 function clearFilters(): void {
+  if (searchTimer !== null) clearTimeout(searchTimer);
   search.value = '';
   groupId.value = ANY;
   status.value = ANY;
