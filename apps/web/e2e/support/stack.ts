@@ -3,8 +3,10 @@ import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-import sharedUtils from '@sher/shared-utils';
-const { SystemClock } = sharedUtils;
+import { createRequire } from 'node:module';
+import type * as SherSharedUtils from '@sher/shared-utils';
+const requireShared = createRequire(import.meta.url);
+const { SystemClock } = requireShared('@sher/shared-utils') as typeof SherSharedUtils;
 
 import { assertE2eDatabase, E2E_DATABASE_URL, resetE2eDatabase } from './database';
 import { E2E_API_URL } from './api';
