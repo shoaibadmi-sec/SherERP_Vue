@@ -5,7 +5,7 @@ module.exports = tseslint.config(
   {
     // Build output, dependencies, and the boundary checker's deliberate
     // violation fixtures — those exist to be broken, linting them is noise.
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'tools/boundaries/__fixtures__/**', 'vendor/hisabiq_ui/**', 'apps/web/public/hisabiq-pos/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'tools/boundaries/__fixtures__/**'],
   },
   ...tseslint.configs.recommended,
   {

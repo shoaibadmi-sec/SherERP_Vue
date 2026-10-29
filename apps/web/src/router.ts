@@ -144,20 +144,7 @@ const router = createRouter({
     // Phase 6 — §5.7, §5.8. The POS is its own full-screen path: a sale being
     // rung up is not a sale that exists, and the counter must not sit inside a
     // list it can navigate away from by accident.
-    // Exact, untouched HisabIQ React POS with its original shell and CSS.
-    {
-      path: '/pos',
-      name: 'pos',
-      component: () => import('./pages/HisabiqOriginalPosPage.vue'),
-      // A posted invoice correction or party-origin sale must use real API-backed
-      // checkout, not the upstream React demo stores, until the adapter exists.
-      beforeEnter: (to) =>
-        typeof to.query['edit'] === 'string' || typeof to.query['customer'] === 'string'
-          ? { name: 'pos-vue', query: to.query }
-          : true,
-    },
-    // Real SherERP API-backed checkout retained until the React adapter is complete.
-    { path: '/pos/vue', name: 'pos-vue', component: () => import('./pages/PosPage.vue') },
+    { path: '/pos', name: 'pos', component: () => import('./pages/PosPage.vue') },
     { path: '/sales', name: 'sales', component: () => import('./pages/SalesPage.vue') },
     { path: '/expenses', name: 'expenses', component: () => import('./pages/ExpensesPage.vue') },
     { path: '/settings/periods', name: 'periods', component: () => import('./pages/PeriodsPage.vue') },

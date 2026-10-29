@@ -1,1 +1,0 @@
-import{bx as t}from"./index-BlwcL881.js";const a={Customer:"ক্রেতা",Supplier:"সরবরাহকারী",Vendor:"ভেন্ডর",Lender:"ঋণদাতা",Borrower:"ঋণগ্রহীতা",Payee:"খরচের প্রাপক",Owner:"মালিক"},p=(e,n)=>t(n,e,a[e]);function s(e,n){const[r,o]=e.split(" · ");return n==="English + Bangla"?e:t(n,r,o??r)}export{s as a,p};
