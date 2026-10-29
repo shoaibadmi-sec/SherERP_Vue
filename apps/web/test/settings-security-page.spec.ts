@@ -143,6 +143,8 @@ describe('SettingsSecurityPage', () => {
   });
 
   it("shows the server's own code and message on failure (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     password.mockRejectedValue(
       new ApiError('UNAUTHENTICATED', 'That current credential is not correct', 401),
     );
@@ -193,6 +195,8 @@ describe('SettingsSecurityPage', () => {
   });
 
   it("surfaces the server's code if the settings cannot be read (UI-28)", async () => {
+    // Technical references belong to support/audit-authorized users, not all operators.
+    useSession().setPermissions([...useSession().permissions.value, 'audit.event.view']);
     settings.mockRejectedValue(new ApiError('UNAUTHENTICATED', 'Token expired', 401));
 
     const wrapper = await mountLoaded();
