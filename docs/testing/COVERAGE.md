@@ -47,7 +47,7 @@
 | PartiesPage | 🟡 PARTIALLY TESTED | dropdown filter-group, dropdown filter-status, action Add, action Add the first, action Delete, action Reactivate, action Remove |
 | PartyFormPage | 🟡 PARTIALLY TESTED | required field party-name, required field party-phone, required field party-credit, required field party-opening, dropdown customerGroupId, dropdown openingDirection, dropdown party-opening-role, action Edit details, action Delete, action Save changes |
 | PartyLedgerPage | 🟡 PARTIALLY TESTED | dropdown ledger-page-size, action Vendor workspace, action Receive payment, action Pay supplier |
-| PosPage | 🟡 PARTIALLY TESTED | dropdown customerId, dropdown line.vendorPartyId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
+| PosPage | 🟡 PARTIALLY TESTED | dropdown line.vendorPartyId, dropdown customerId, dropdown payment.accountId, action Sell anyway, action Remove …, action Confirm Allocation, action Remove this payment, action Delete this draft |
 | ProductsPage | 🟡 PARTIALLY TESTED | dropdown filter-brand, dropdown filter-category, dropdown filter-subcategory, dropdown filter-stock, dropdown filter-status, action Add the first product, action Reactivate, action Delete |
 | PurchaseDetailPage | 🟡 PARTIALLY TESTED | action New purchase, action Cancel bill |
 | PurchaseFormPage | 🟡 PARTIALLY TESTED | required field supplierId, required field paidAccountId, dropdown supplierId, dropdown productPick, dropdown categoryId, dropdown cost.category, dropdown cost.method, dropdown paidAccountId, action Remove …, action Remove landed cost … |
