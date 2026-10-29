@@ -92,7 +92,10 @@ const visibleRows = computed(() => {
   if (activityTab.value === 'ALL') return rows.value;
   if (activityTab.value === 'INVOICES') return rows.value.filter((row) =>
     ['SALE', 'SALE_RETURN', 'PURCHASE', 'PURCHASE_RETURN'].includes(row.sourceDocumentType));
-  return rows.value.filter((row) => ['PAYMENT', 'RECEIPT'].includes(row.sourceDocumentType));
+  // Journal source types are module-qualified (e.g. CUSTOMER_RECEIPT and
+  // SUPPLIER_PAYMENT), not just bare PAYMENT/RECEIPT.
+  return rows.value.filter((row) =>
+    /(?:PAYMENT|RECEIPT|SETTLEMENT)/.test(row.sourceDocumentType));
 });
 
 async function load(cursor: string | null = null): Promise<void> {
@@ -137,6 +140,16 @@ function money(minor: number): string {
   return `৳${Money(minor).format()}`;
 }
 
+/** A running figure must say who owes whom, never only the absolute amount. */
+function runningBalanceText(minor: number): string {
+  if (minor === 0) return 'Settled';
+  return `${money(Math.abs(minor))} ${minor > 0 ? 'পাবো' : 'দিব'}`;
+}
+
+function runningBalanceClass(minor: number): string {
+  return minor === 0 ? 'balance-settled' : balanceClass(minor > 0 ? 'RECEIVABLE' : 'PAYABLE');
+}
+
 /** §2.4's display mapping, the same one the parties list applies. */
 function balanceText(balance: PartyLedgerResponse['openingBalance']): string {
   if (balance.direction === 'SETTLED') return 'Settled';
@@ -174,6 +187,9 @@ const DOCUMENT_LABELS: Record<string, string> = {
   PURCHASE_RETURN: 'Purchase return',
   PAYMENT: 'Payment',
   RECEIPT: 'Receipt',
+  CUSTOMER_RECEIPT: 'Customer receipt',
+  SUPPLIER_PAYMENT: 'Supplier payment',
+  VENDOR_PAYMENT: 'Vendor payment',
 };
 
 function documentLabel(type: string): string {
@@ -572,7 +588,9 @@ watch([partyId, role], () => {
                 <td class="mono">{{ row.sourceNumber }}</td>
                 <td class="num">{{ row.debitMinor === 0 ? '—' : money(row.debitMinor) }}</td>
                 <td class="num">{{ row.creditMinor === 0 ? '—' : money(row.creditMinor) }}</td>
-                <td class="num">{{ money(Math.abs(row.runningBalanceMinor)) }}</td>
+                <td class="num" :class="runningBalanceClass(row.runningBalanceMinor)">
+                  {{ runningBalanceText(row.runningBalanceMinor) }}
+                </td>
               </tr>
             </tbody>
             <!--
