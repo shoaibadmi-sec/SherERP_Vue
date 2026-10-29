@@ -64,7 +64,7 @@ test.describe('HisabIQ unified Party workspace', () => {
     await page.getByRole('navigation', { name: 'Party role' })
       .getByRole('button', { name: /Vendors/i }).click();
     await expect(page).toHaveURL(/role=VENDOR/);
-    await expect(page.getByRole('region', { name: 'Party directory' }))
+    await expect(page.getByRole('region', { name: 'Party directory' })
       .getByText('No people found')).toBeVisible();
   });
 
