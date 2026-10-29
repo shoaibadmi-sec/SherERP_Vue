@@ -24,11 +24,11 @@ async function capture(page: Page, testInfo: TestInfo, name: string): Promise<vo
     animations: 'disabled',
   });
   const encoded = preview.toString('base64');
-  console.log(`PARTY_PREVIEW_BEGIN ${name}`);
+  process.stdout.write(`PARTY_PREVIEW_BEGIN ${name}\n`);
   for (let i = 0; i < encoded.length; i += 4000) {
-    console.log(`PARTY_PREVIEW_CHUNK ${name} ${encoded.slice(i, i + 4000)}`);
+    process.stdout.write(`PARTY_PREVIEW_CHUNK ${name} ${encoded.slice(i, i + 4000)}\n`);
   }
-  console.log(`PARTY_PREVIEW_END ${name}`);
+  process.stdout.write(`PARTY_PREVIEW_END ${name}\n`);
 }
 
 async function noHorizontalPageOverflow(page: Page): Promise<void> {
@@ -62,7 +62,7 @@ test('desktop Party workspace retains two aligned panels and legible ledger', as
   expect(layout!.directory.right).toBeLessThan(layout!.detail.x);
   expect(layout!.detail.width).toBeGreaterThan(450);
   expect(layout!.headingFont).toBeGreaterThanOrEqual(16);
-  console.log('PARTY_DESIGN_METRICS desktop', JSON.stringify(layout));
+  process.stdout.write(`PARTY_DESIGN_METRICS desktop ${JSON.stringify(layout)}\n`);
   await capture(page, testInfo, 'desktop-customer-ledger');
 
   await page.getByRole('navigation', { name: 'Party role' })
@@ -96,6 +96,6 @@ test('tablet Party directory and detail fit without clipped actions', async ({ p
     return { width: rect.width, height: rect.height };
   });
   expect(backSize.height, 'tablet back action should be a touch target').toBeGreaterThanOrEqual(40);
-  console.log('PARTY_DESIGN_METRICS tablet', JSON.stringify({ backSize }));
+  process.stdout.write(`PARTY_DESIGN_METRICS tablet ${JSON.stringify({ backSize })}\n`);
   await capture(page, testInfo, 'tablet-customer-ledger');
 });
